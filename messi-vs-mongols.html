@@ -213,6 +213,54 @@
     }
     .opp-block strong { color: #ffb0b0; }
 
+    /* material picker */
+    .material-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .mat-card {
+      background: var(--bg-3);
+      border: 1.5px solid var(--line-2);
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      transition: all 0.18s ease;
+    }
+    .mat-card:hover {
+      border-color: var(--china-soft);
+      background: var(--bg-2);
+      transform: translateY(-1px);
+    }
+    .mat-card.active {
+      border-color: var(--china);
+      background: var(--china-tint);
+      box-shadow: 0 0 0 2px var(--china-glow);
+    }
+    .mat-card b {
+      color: var(--white);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .mat-card.active b { color: var(--china-soft); }
+    .mat-card em {
+      font-style: italic;
+      font-size: 0.74rem;
+      color: var(--china-soft);
+    }
+    .mat-card span {
+      font-size: 0.7rem;
+      color: var(--grey-1);
+      letter-spacing: 0.02em;
+      margin-top: 0.15rem;
+    }
+
     .controls {
       margin-top: 1.4rem;
       display: grid;
@@ -352,9 +400,12 @@
   <!-- HUD overlay -->
   <div class="hud" id="hud" style="display:none;">
     <div class="hud-block">
-      <span class="hud-k">graphene integrity</span>
+      <span class="hud-k"><span id="matName">graphene</span> integrity</span>
       <span class="hud-v" id="hpVal">100</span>
       <div class="hp-bar"><div class="hp-fill" id="hpFill"></div></div>
+      <span class="hud-k" style="margin-top:0.5rem;">escape burst &middot; <b style="color:var(--china-soft)">SPACE</b></span>
+      <span class="hud-v" id="escVal" style="font-size:0.9rem;">ready</span>
+      <div class="hp-bar"><div class="hp-fill esc-fill" id="escFill" style="background: linear-gradient(90deg, #7ab8e8, #ffffff);"></div></div>
     </div>
     <div class="hud-block" style="text-align:center;">
       <span class="hud-k">wave</span>
@@ -430,11 +481,44 @@
         horse, the man just proclaimed Khagan of All Who Live in Felt Tents.
       </div>
 
+      <h2 style="margin-top:1.6rem;margin-bottom:0.4rem;">Choose his composition.</h2>
+      <p style="color:var(--grey-1);font-size:0.88rem;margin-bottom:0.9rem;">
+        Same Messi, different material substrate. Each trades durability against mobility.
+      </p>
+      <div class="material-grid" id="materialGrid">
+        <button class="mat-card active" data-mat="graphene">
+          <b>Graphene</b>
+          <em>200&times; steel &middot; the balanced flex</em>
+          <span>HP 100 &middot; speed 4.0 &middot; regen normal</span>
+        </button>
+        <button class="mat-card" data-mat="damascus">
+          <b>Damascus Steel</b>
+          <em>folded 16 times &middot; legendary blade-stopper</em>
+          <span>HP 150 &middot; speed 3.4 &middot; regen slow</span>
+        </button>
+        <button class="mat-card" data-mat="titanium">
+          <b>Titanium</b>
+          <em>aerospace-grade &middot; lightweight and quick</em>
+          <span>HP 80 &middot; speed 4.6 &middot; regen fast</span>
+        </button>
+        <button class="mat-card" data-mat="tungsten">
+          <b>Tungsten Carbide</b>
+          <em>densest practical metal &middot; immovable fortress</em>
+          <span>HP 200 &middot; speed 2.8 &middot; regen minimal</span>
+        </button>
+        <button class="mat-card" data-mat="cnt">
+          <b>Carbon Nanotubes</b>
+          <em>strongest known material &middot; glass cannon</em>
+          <span>HP 90 &middot; speed 4.2 &middot; longer i-frames</span>
+        </button>
+      </div>
+
       <div class="controls">
         <div class="ctrl"><span>move</span><b>W A S D</b></div>
         <div class="ctrl"><span>aim</span><b>mouse</b></div>
         <div class="ctrl"><span>shoot</span><b>left click</b></div>
         <div class="ctrl"><span>dash</span><b>SHIFT</b></div>
+        <div class="ctrl"><span>escape burst</span><b>SPACE</b></div>
         <div class="ctrl"><span>football</span><b>1</b></div>
         <div class="ctrl"><span>bullet</span><b>2</b></div>
         <div class="ctrl"><span>missile</span><b>3</b></div>
@@ -505,6 +589,35 @@ canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.cli
 canvas.addEventListener('mousedown', e => { mouse.down = true; });
 canvas.addEventListener('mouseup',   e => { mouse.down = false; });
 
+// ---------- materials ----------
+const MATERIALS = {
+  graphene: {
+    name: 'graphene',
+    hp: 100, regen: 0.25, regenT: 500,
+    speed: 4.0, dash: 13, iframes: 12,
+  },
+  damascus: {
+    name: 'damascus',
+    hp: 150, regen: 0.10, regenT: 700,
+    speed: 3.4, dash: 11, iframes: 14,
+  },
+  titanium: {
+    name: 'titanium',
+    hp: 80, regen: 0.30, regenT: 350,
+    speed: 4.6, dash: 14, iframes: 10,
+  },
+  tungsten: {
+    name: 'tungsten',
+    hp: 200, regen: 0.05, regenT: 900,
+    speed: 2.8, dash: 9, iframes: 16,
+  },
+  cnt: {
+    name: 'nanotube',
+    hp: 90, regen: 0.20, regenT: 450,
+    speed: 4.2, dash: 15, iframes: 18,
+  },
+};
+
 // ---------- state ----------
 const state = {
   running: false,
@@ -515,19 +628,30 @@ const state = {
   shot: 0,            // 0 football, 1 bullet, 2 missile
   lastShot: 0,
   cooldown: [180, 90, 700],  // ms per shot type
+  material: 'graphene',
   bosState: null,
 };
 let paused = false;
+
+// ESCAPE BURST — SR-71-grade getaway speed
+const ESCAPE_SPEED   = 26;     // px/frame, far faster than any foe
+const ESCAPE_FRAMES  = 55;     // ~0.9s at 60fps
+const ESCAPE_COOL    = 14000;  // ms
 
 // ---------- entities ----------
 const messi = {
   x: W/2, y: H/2,
   r: 14,
   hp: 100, maxHp: 100,
-  speed: 4.0,           // baseline
+  speed: 4.0,           // baseline (overwritten by material)
   dashSpeed: 13,        // Concorde-scaled
-  dashCool: 0,          // ms remaining
-  dashing: 0,           // active dash frames
+  iframes: 12,          // dash iframes
+  regen: 0.25,
+  regenInt: 500,
+  dashCool: 0,
+  dashing: 0,
+  escapeT: 0,           // active escape frames
+  escapeCool: 0,        // ms remaining on escape cooldown
   trail: [],
   regenT: 0,
 };
@@ -747,8 +871,10 @@ function update(dt, now) {
   if (mag > 0) { vx /= mag; vy /= mag; }
 
   let speed = messi.speed;
-  if (keys['shift'] && messi.dashCool <= 0 && mag > 0) {
-    messi.dashing = 12;
+
+  // ----- dash -----
+  if (keys['shift'] && messi.dashCool <= 0 && mag > 0 && messi.escapeT <= 0) {
+    messi.dashing = messi.iframes;
     messi.dashCool = 900;
   }
   messi.dashCool = Math.max(0, messi.dashCool - dt);
@@ -757,17 +883,41 @@ function update(dt, now) {
     messi.dashing--;
   }
 
-  messi.x = Math.max(messi.r, Math.min(W - messi.r, messi.x + vx*speed));
-  messi.y = Math.max(messi.r, Math.min(H - messi.r, messi.y + vy*speed));
+  // ----- ESCAPE BURST (Space) -----
+  if (keys[' '] && messi.escapeCool <= 0 && messi.escapeT <= 0) {
+    messi.escapeT    = ESCAPE_FRAMES;
+    messi.escapeCool = ESCAPE_COOL;
+    addParticles(messi.x, messi.y, 30, '#ffffff', 4, 600);
+  }
+  messi.escapeCool = Math.max(0, messi.escapeCool - dt);
+  if (messi.escapeT > 0) {
+    // glide in current velocity direction; if not moving, pick aim direction
+    let evx = vx, evy = vy;
+    if (mag === 0) {
+      const ax = mouse.x - messi.x, ay = mouse.y - messi.y;
+      const al = Math.hypot(ax, ay) || 1;
+      evx = ax / al; evy = ay / al;
+    }
+    messi.x += evx * ESCAPE_SPEED;
+    messi.y += evy * ESCAPE_SPEED;
+    messi.escapeT--;
+    // sparks
+    if (messi.escapeT % 2 === 0) addParticles(messi.x, messi.y, 2, '#7ab8e8', 2, 350);
+  } else {
+    messi.x += vx * speed;
+    messi.y += vy * speed;
+  }
+  messi.x = Math.max(messi.r, Math.min(W - messi.r, messi.x));
+  messi.y = Math.max(messi.r, Math.min(H - messi.r, messi.y));
 
   messi.trail.push({ x: messi.x, y: messi.y, t: 18 });
   if (messi.trail.length > 18) messi.trail.shift();
   messi.trail.forEach(p => p.t--);
 
-  // regen (graphene heals slowly)
+  // regen — rate set by material
   messi.regenT += dt;
-  if (messi.regenT > 500 && messi.hp < messi.maxHp) {
-    messi.hp = Math.min(messi.maxHp, messi.hp + 0.25);
+  if (messi.regenT > messi.regenInt && messi.hp < messi.maxHp) {
+    messi.hp = Math.min(messi.maxHp, messi.hp + messi.regen);
     messi.regenT = 0;
   }
 
@@ -972,7 +1122,7 @@ function explode(b) {
 }
 
 function damageMessi(amt) {
-  if (messi.dashing > 0) return;  // i-frames during dash
+  if (messi.dashing > 0 || messi.escapeT > 0) return;  // i-frames during dash + escape
   messi.hp -= amt;
   messi.regenT = 0;
   if (messi.hp <= 0 && state.running) {
@@ -1059,10 +1209,24 @@ function render() {
 }
 
 function drawMessi() {
+  // escape burst halo
+  if (messi.escapeT > 0) {
+    ctx.save();
+    const t = messi.escapeT / ESCAPE_FRAMES;
+    const gr = ctx.createRadialGradient(messi.x, messi.y, messi.r, messi.x, messi.y, messi.r * 4);
+    gr.addColorStop(0, 'rgba(255,255,255,' + (0.4 * t) + ')');
+    gr.addColorStop(1, 'rgba(122, 184, 232, 0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.arc(messi.x, messi.y, messi.r * 4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   ctx.save();
   ctx.translate(messi.x, messi.y);
   // body
-  ctx.fillStyle = '#7ab8e8';
+  ctx.fillStyle = messi.escapeT > 0 ? '#ffffff' : '#7ab8e8';
   ctx.beginPath();
   ctx.arc(0, 0, messi.r, 0, Math.PI*2);
   ctx.fill();
@@ -1219,6 +1383,24 @@ function updateHud() {
   fill.style.width = hpPct + '%';
   fill.classList.toggle('low', hpPct < 30);
 
+  // escape
+  const escFill = document.getElementById('escFill');
+  const escVal  = document.getElementById('escVal');
+  if (messi.escapeT > 0) {
+    escVal.textContent = 'ESCAPING';
+    escVal.style.color = '#ffffff';
+    escFill.style.width = '100%';
+  } else if (messi.escapeCool > 0) {
+    const sec = (messi.escapeCool / 1000).toFixed(1);
+    escVal.textContent = sec + 's';
+    escVal.style.color = 'var(--grey-1)';
+    escFill.style.width = (100 - (messi.escapeCool / ESCAPE_COOL) * 100) + '%';
+  } else {
+    escVal.textContent = 'ready';
+    escVal.style.color = 'var(--china-soft)';
+    escFill.style.width = '100%';
+  }
+
   document.getElementById('waveVal').textContent = state.wave + ' / ' + WAVES.length;
   const remain = foes.length + (boss ? 1 : 0);
   document.getElementById('foeVal').textContent = remain;
@@ -1287,12 +1469,27 @@ function showEnd() {
   document.getElementById('endModal').classList.remove('hidden');
 }
 
+function applyMaterial(id) {
+  const m = MATERIALS[id] || MATERIALS.graphene;
+  state.material = id;
+  messi.maxHp    = m.hp;
+  messi.hp       = m.hp;
+  messi.speed    = m.speed;
+  messi.dashSpeed = m.dash;
+  messi.iframes  = m.iframes;
+  messi.regen    = m.regen;
+  messi.regenInt = m.regenT;
+  const mn = document.getElementById('matName');
+  if (mn) mn.textContent = m.name;
+}
+
 function reset() {
   foes = []; bullets = []; particles = []; boss = null;
+  applyMaterial(state.material);
   messi.x = W/2; messi.y = H/2;
-  messi.hp = messi.maxHp;
   messi.trail = [];
   messi.dashCool = 0; messi.dashing = 0;
+  messi.escapeT = 0; messi.escapeCool = 0;
   state.wave = 0;
   state.kills = 0;
   state.startedAt = performance.now();
@@ -1328,6 +1525,20 @@ document.getElementById('restartLink').addEventListener('click', (e) => {
 document.querySelectorAll('.shot').forEach(el => {
   el.addEventListener('click', () => setShot(parseInt(el.dataset.shot)));
 });
+
+// material picker
+document.querySelectorAll('.mat-card').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.mat-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    state.material = el.dataset.mat;
+  });
+});
+
+// don't let space scroll the page
+window.addEventListener('keydown', e => {
+  if (e.key === ' ') e.preventDefault();
+}, { passive: false });
 
 requestAnimationFrame(loop);
 </script>
