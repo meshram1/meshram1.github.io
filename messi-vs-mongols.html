@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prime Messi : 1206 &mdash; vs. the Mongol Army</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ============================================================
+       Prime Messi: 1206 — game-specific styles
+       Palette inherits portfolio variables from styles.css
+       ============================================================ */
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      display: flex; flex-direction: column;
+      background: #050608;
+      cursor: crosshair;
+    }
+    .game-nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 0.8rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 20;
+      background: rgba(5,6,8,0.6);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      font-size: 0.78rem;
+    }
+    .game-nav a {
+      color: var(--off-white);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+    }
+    .game-nav a:hover { color: var(--china-soft); }
+    .game-nav .title {
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--china-soft);
+      font-weight: 600;
+    }
+
+    /* canvas / stage */
+    #stage {
+      position: absolute;
+      inset: 0;
+      display: block;
+      margin: auto;
+      background: radial-gradient(ellipse at center, #0e0f14 0%, #050608 70%);
+    }
+
+    /* HUD */
+    .hud {
+      position: fixed; top: 60px; left: 0; right: 0;
+      padding: 0.9rem 1.6rem;
+      display: flex; justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+      font-size: 0.85rem;
+    }
+    .hud-block {
+      background: rgba(10,11,15,0.7);
+      border: 1px solid var(--line);
+      border-left: 2px solid var(--china);
+      padding: 0.6rem 0.9rem;
+      min-width: 160px;
+      backdrop-filter: blur(6px);
+    }
+    .hud-k {
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--grey-2);
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .hud-v {
+      font-size: 1.1rem;
+      color: var(--white);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .hud-v .sub { color: var(--china-soft); font-size: 0.78rem; margin-left: 0.4rem; }
+
+    .hp-bar {
+      width: 200px; height: 6px;
+      background: var(--line);
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .hp-fill {
+      height: 100%; width: 100%;
+      background: linear-gradient(90deg, var(--china), var(--china-soft));
+      transition: width 0.18s linear;
+    }
+    .hp-fill.low { background: linear-gradient(90deg, #b03a3a, #d96b6b); }
+
+    .shots {
+      display: flex; gap: 0.5rem;
+      margin-top: 0.3rem;
+    }
+    .shot {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--line-2);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--grey-1);
+      background: rgba(0,0,0,0.3);
+    }
+    .shot.active {
+      border-color: var(--china);
+      color: var(--china-soft);
+      background: var(--china-tint);
+    }
+    .shot .key {
+      color: var(--grey-2);
+      font-size: 0.62rem;
+      margin-right: 0.3rem;
+    }
+    .shot.active .key { color: var(--china); }
+
+    /* modal screens (intro, wave card, end) */
+    .modal {
+      position: fixed; inset: 0;
+      z-index: 30;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(5,6,8,0.85);
+      backdrop-filter: blur(12px);
+      padding: 2rem;
+    }
+    .modal.hidden { display: none; }
+    .modal-card {
+      max-width: 720px;
+      width: 100%;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      padding: 2.5rem;
+      position: relative;
+    }
+    .modal-card::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 18px; height: 18px;
+      border-top: 2px solid var(--china);
+      border-left: 2px solid var(--china);
+    }
+    .modal-card::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; right: -1px;
+      width: 18px; height: 18px;
+      border-bottom: 2px solid var(--china);
+      border-right: 2px solid var(--china);
+    }
+    .modal h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-style: italic;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .modal h1 .accent { color: var(--china-soft); }
+    .modal .year {
+      font-size: 0.78rem;
+      letter-spacing: 0.3em;
+      color: var(--china-soft);
+      margin-bottom: 1.6rem;
+      text-transform: uppercase;
+    }
+    .modal h2 {
+      font-size: 1.5rem;
+      color: var(--white);
+      margin-bottom: 0.6rem;
+      font-style: italic;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0;
+      margin: 1.4rem 0;
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+    .stat-cell {
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 0.8rem 1rem;
+      background: var(--bg-3);
+    }
+    .stat-k {
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--grey-2);
+    }
+    .stat-v {
+      font-size: 1rem;
+      color: var(--white);
+      font-weight: 600;
+      margin-top: 0.2rem;
+    }
+    .stat-v em { font-style: italic; color: var(--china-soft); font-weight: 400; }
+
+    .opp-block {
+      margin-top: 1.4rem;
+      padding: 1rem 1.2rem;
+      background: rgba(120, 30, 30, 0.12);
+      border-left: 2px solid #d96b6b;
+      color: var(--off-white);
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+    .opp-block strong { color: #ffb0b0; }
+
+    .controls {
+      margin-top: 1.4rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .ctrl {
+      padding: 0.6rem 0.8rem;
+      background: var(--bg-3);
+      border: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 0.6rem;
+    }
+    .ctrl b {
+      color: var(--china-soft);
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+    }
+    .ctrl span { color: var(--grey-1); }
+
+    .start-btn {
+      margin-top: 1.6rem;
+      width: 100%;
+      padding: 1rem;
+      background: var(--china);
+      color: var(--white);
+      border: 1px solid var(--china);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .start-btn:hover {
+      background: var(--china-soft);
+      box-shadow: 0 0 30px var(--china-glow);
+      transform: translateY(-2px);
+    }
+
+    .wave-card { text-align: center; }
+    .wave-card .wave-num {
+      font-size: 0.78rem;
+      letter-spacing: 0.3em;
+      color: var(--china-soft);
+      text-transform: uppercase;
+    }
+    .wave-card .wave-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-style: italic;
+      color: var(--white);
+      margin: 0.5rem 0 1rem;
+    }
+    .wave-card .wave-desc {
+      color: var(--off-white);
+      font-size: 1rem;
+      max-width: 460px;
+      margin: 0 auto 1rem;
+    }
+    .wave-card .wave-foes {
+      color: var(--china-soft);
+      font-size: 0.88rem;
+      letter-spacing: 0.06em;
+      font-style: italic;
+    }
+
+    /* boss UI */
+    .boss-hp {
+      position: fixed;
+      left: 50%; transform: translateX(-50%);
+      bottom: 30px;
+      width: min(620px, 80vw);
+      z-index: 9;
+      pointer-events: none;
+      display: none;
+    }
+    .boss-hp.on { display: block; }
+    .boss-hp .boss-name {
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      color: #ffcf6b;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 0.4rem;
+      text-shadow: 0 0 12px rgba(255, 207, 107, 0.4);
+    }
+    .boss-hp .boss-name em { color: var(--off-white); font-style: italic; }
+    .boss-hp .boss-bar {
+      height: 10px;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid #ffcf6b;
+    }
+    .boss-hp .boss-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #d97a2a, #ffcf6b);
+      transition: width 0.2s;
+    }
+
+    /* killcount popups */
+    .pop {
+      position: absolute;
+      pointer-events: none;
+      font-size: 0.78rem;
+      color: var(--china-soft);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      animation: pop-up 0.9s ease-out forwards;
+    }
+    @keyframes pop-up {
+      0%   { transform: translateY(0);     opacity: 1; }
+      100% { transform: translateY(-30px); opacity: 0; }
+    }
+
+    .end-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin: 1.4rem 0;
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+    .end-stats .stat-cell { text-align: center; }
+    .end-stats .stat-v { font-size: 1.6rem; }
+  </style>
+</head>
+<body>
+
+  <!-- top navigation -->
+  <div class="game-nav">
+    <a href="index.html">&larr; back to portfolio</a>
+    <span class="title">Prime Messi : 1206</span>
+    <a href="#" id="restartLink">restart</a>
+  </div>
+
+  <!-- HUD overlay -->
+  <div class="hud" id="hud" style="display:none;">
+    <div class="hud-block">
+      <span class="hud-k">graphene integrity</span>
+      <span class="hud-v" id="hpVal">100</span>
+      <div class="hp-bar"><div class="hp-fill" id="hpFill"></div></div>
+    </div>
+    <div class="hud-block" style="text-align:center;">
+      <span class="hud-k">wave</span>
+      <span class="hud-v" id="waveVal">0 / 6</span>
+      <span class="hud-k" style="margin-top:0.4rem;">foes remaining</span>
+      <span class="hud-v" id="foeVal">0</span>
+    </div>
+    <div class="hud-block" style="text-align:right;">
+      <span class="hud-k">shot type</span>
+      <div class="shots" id="shotRow">
+        <div class="shot active" data-shot="0"><span class="key">1</span>football</div>
+        <div class="shot" data-shot="1"><span class="key">2</span>bullet</div>
+        <div class="shot" data-shot="2"><span class="key">3</span>missile</div>
+      </div>
+      <span class="hud-k" style="margin-top:0.4rem;">kills</span>
+      <span class="hud-v" id="killVal">0</span>
+    </div>
+  </div>
+
+  <!-- boss bar -->
+  <div class="boss-hp" id="bossHpWrap">
+    <div class="boss-name"><em>The Great Khan</em> &mdash; Temüjin / <em>Genghis</em></div>
+    <div class="boss-bar"><div class="boss-fill" id="bossFill"></div></div>
+  </div>
+
+  <!-- game canvas -->
+  <canvas id="stage"></canvas>
+
+  <!-- intro modal -->
+  <div class="modal" id="introModal">
+    <div class="modal-card">
+      <div class="year">A.D. 1206 &middot; the Kurultai of the Onon River</div>
+      <h1>Prime <span class="accent">Messi.</span></h1>
+      <h2>vs. the Yeke Mongol Ulus.</h2>
+
+      <p style="color:var(--off-white);margin-bottom:0.4rem;">
+        By some quirk of relativistic football physics, Lionel Andrés
+        Messi &mdash; age 28, in his absolute prime &mdash; has been
+        deposited onto the Mongolian steppe.
+      </p>
+
+      <div class="stat-grid">
+        <div class="stat-cell">
+          <div class="stat-k">top speed</div>
+          <div class="stat-v">Mach 2.04 <em>&middot; Concorde</em></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-k">body composition</div>
+          <div class="stat-v">monolayer <em>graphene</em></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-k">tap shot</div>
+          <div class="stat-v">131 km/h <em>&middot; football</em></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-k">free kick</div>
+          <div class="stat-v">Mach 2.5 <em>&middot; AK-47 round</em></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-k">banana shot</div>
+          <div class="stat-v">AGM-114 <em>&middot; Hellfire</em></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-k">physics</div>
+          <div class="stat-v">F = ma <em>&middot; magnus + drag</em></div>
+        </div>
+      </div>
+
+      <div class="opp-block">
+        Across the steppe, advancing: <strong>9,800 mounted warriors</strong>
+        of the Yeke Mongol Ulus &mdash; lamellar armour laced with rawhide,
+        scimitars drawn, composite bows nocked. At their head, on a black
+        horse, the man just proclaimed Khagan of All Who Live in Felt Tents.
+      </div>
+
+      <div class="controls">
+        <div class="ctrl"><span>move</span><b>W A S D</b></div>
+        <div class="ctrl"><span>aim</span><b>mouse</b></div>
+        <div class="ctrl"><span>shoot</span><b>left click</b></div>
+        <div class="ctrl"><span>dash</span><b>SHIFT</b></div>
+        <div class="ctrl"><span>football</span><b>1</b></div>
+        <div class="ctrl"><span>bullet</span><b>2</b></div>
+        <div class="ctrl"><span>missile</span><b>3</b></div>
+        <div class="ctrl"><span>pause</span><b>P</b></div>
+      </div>
+
+      <button class="start-btn" id="startBtn">kick off &rarr;</button>
+    </div>
+  </div>
+
+  <!-- wave modal -->
+  <div class="modal hidden" id="waveModal">
+    <div class="modal-card wave-card">
+      <div class="wave-num" id="waveLabel">Wave 01</div>
+      <h2 class="wave-title" id="waveTitle">The Outriders</h2>
+      <p class="wave-desc" id="waveDesc">Scouts probing the foreigner.</p>
+      <p class="wave-foes" id="waveFoes">30 footmen &middot; lamellar armour</p>
+      <button class="start-btn" id="waveBtn" style="margin-top:1.6rem;">advance &rarr;</button>
+    </div>
+  </div>
+
+  <!-- end modal -->
+  <div class="modal hidden" id="endModal">
+    <div class="modal-card">
+      <div class="year" id="endStrap">END OF GAME</div>
+      <h1 id="endTitle">Final whistle.</h1>
+      <p id="endText" style="color:var(--off-white);margin-bottom:0.4rem;"></p>
+      <div class="end-stats">
+        <div class="stat-cell"><div class="stat-k">waves</div><div class="stat-v" id="endWaves">0 / 6</div></div>
+        <div class="stat-cell"><div class="stat-k">kills</div><div class="stat-v" id="endKills">0</div></div>
+        <div class="stat-cell"><div class="stat-k">time</div><div class="stat-v" id="endTime">0.0 s</div></div>
+      </div>
+      <button class="start-btn" id="restartBtn">play again &rarr;</button>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+//  Prime Messi: 1206 — game logic
+// ============================================================
+
+const canvas = document.getElementById('stage');
+const ctx    = canvas.getContext('2d');
+
+let W = 0, H = 0;
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W; canvas.height = H;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---------- world / camera ----------
+// We'll just render in world = screen for simplicity
+// (camera could pan, but a fixed arena keeps it readable)
+
+// ---------- input ----------
+const keys = {};
+const mouse = { x: W/2, y: H/2, down: false };
+window.addEventListener('keydown',  e => {
+  keys[e.key.toLowerCase()] = true;
+  if (['1','2','3'].includes(e.key)) setShot(parseInt(e.key) - 1);
+  if (e.key.toLowerCase() === 'p') paused = !paused;
+});
+window.addEventListener('keyup',    e => keys[e.key.toLowerCase()] = false);
+canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+canvas.addEventListener('mousedown', e => { mouse.down = true; });
+canvas.addEventListener('mouseup',   e => { mouse.down = false; });
+
+// ---------- state ----------
+const state = {
+  running: false,
+  paused:  false,
+  wave: 0,
+  kills: 0,
+  startedAt: 0,
+  shot: 0,            // 0 football, 1 bullet, 2 missile
+  lastShot: 0,
+  cooldown: [180, 90, 700],  // ms per shot type
+  bosState: null,
+};
+let paused = false;
+
+// ---------- entities ----------
+const messi = {
+  x: W/2, y: H/2,
+  r: 14,
+  hp: 100, maxHp: 100,
+  speed: 4.0,           // baseline
+  dashSpeed: 13,        // Concorde-scaled
+  dashCool: 0,          // ms remaining
+  dashing: 0,           // active dash frames
+  trail: [],
+  regenT: 0,
+};
+let foes = [];
+let bullets = [];
+let particles = [];
+let popups = [];
+let boss = null;
+
+// ---------- waves ----------
+const WAVES = [
+  {
+    label: 'Wave 01',
+    title: 'The Outriders',
+    desc:  'Scouts probing the foreigner who fell from the sky.',
+    foes:  '30 footmen · lamellar armour',
+    spawn: { footman: 30 }
+  },
+  {
+    label: 'Wave 02',
+    title: 'The Skirmish Line',
+    desc:  'Composite bows nocked at 200 metres.',
+    foes:  '40 footmen · 12 horse-archers',
+    spawn: { footman: 40, archer: 12 }
+  },
+  {
+    label: 'Wave 03',
+    title: 'The Tumen Detachment',
+    desc:  'A regiment of a thousand, drilled and disciplined.',
+    foes:  '60 footmen · 20 archers · 6 cavalry',
+    spawn: { footman: 60, archer: 20, cavalry: 6 }
+  },
+  {
+    label: 'Wave 04',
+    title: 'The Right Wing',
+    desc:  'Subutai\'s veterans, fanning out at full gallop.',
+    foes:  '80 footmen · 30 archers · 12 cavalry',
+    spawn: { footman: 80, archer: 30, cavalry: 12 }
+  },
+  {
+    label: 'Wave 05',
+    title: 'The Vanguard of the Khan',
+    desc:  'A hush, then iron everywhere.',
+    foes:  '120 footmen · 45 archers · 20 cavalry',
+    spawn: { footman: 120, archer: 45, cavalry: 20 }
+  },
+  {
+    label: 'Wave 06',
+    title: 'Temüjin himself.',
+    desc:  'A black horse. A red lacquered helm. The Keshig at his flanks.',
+    foes:  'Genghis Khan · 20 Keshig (elite cavalry)',
+    spawn: { boss: true, cavalry: 20 }
+  }
+];
+
+// ============================================================
+//   FOE FACTORIES
+// ============================================================
+function spawnFoe(type) {
+  // spawn at random edge
+  const edge = Math.floor(Math.random() * 4);
+  let x, y;
+  if      (edge === 0) { x = -20;      y = Math.random()*H; }
+  else if (edge === 1) { x = W + 20;   y = Math.random()*H; }
+  else if (edge === 2) { x = Math.random()*W; y = -20; }
+  else                 { x = Math.random()*W; y = H + 20; }
+
+  if (type === 'footman') {
+    foes.push({
+      type, x, y, r: 9,
+      speed: 1.2 + Math.random()*0.4,
+      hp: 1, maxHp: 1,
+      cooldown: 0,
+      color: '#d2864a',
+      facing: 0,
+    });
+  } else if (type === 'archer') {
+    foes.push({
+      type, x, y, r: 9,
+      speed: 0.9 + Math.random()*0.3,
+      hp: 1, maxHp: 1,
+      cooldown: 1000 + Math.random()*1200,
+      preferDist: 240,
+      color: '#a98740',
+      facing: 0,
+    });
+  } else if (type === 'cavalry') {
+    foes.push({
+      type, x, y, r: 13,
+      speed: 2.6,
+      hp: 3, maxHp: 3,
+      cooldown: 0,
+      color: '#955d3b',
+      facing: 0,
+      charging: false,
+    });
+  }
+}
+
+function spawnBoss() {
+  boss = {
+    type: 'boss',
+    x: W/2, y: -80,
+    r: 22,
+    speed: 1.4,
+    hp: 320, maxHp: 320,
+    cooldown: 0,
+    phase: 1,
+    color: '#ffcf6b',
+    angle: 0,
+    summonT: 0,
+  };
+}
+
+// ============================================================
+//   SHOTS
+// ============================================================
+function setShot(idx) {
+  state.shot = idx;
+  document.querySelectorAll('.shot').forEach(el => el.classList.remove('active'));
+  const tgt = document.querySelector(`.shot[data-shot="${idx}"]`);
+  if (tgt) tgt.classList.add('active');
+}
+
+function fireShot(now) {
+  if (now - state.lastShot < state.cooldown[state.shot]) return;
+  state.lastShot = now;
+
+  const dx = mouse.x - messi.x;
+  const dy = mouse.y - messi.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len;
+
+  if (state.shot === 0) {
+    // football — slower, knockback, 1-shot footmen
+    bullets.push({
+      type: 'football',
+      x: messi.x + ux*messi.r, y: messi.y + uy*messi.r,
+      vx: ux*10, vy: uy*10,
+      r: 6,
+      dmg: 1.4, knock: 16, life: 700,
+      pierce: 1,
+      spin: 0,
+    });
+  } else if (state.shot === 1) {
+    // bullet — fast, pierces, low damage but precise
+    bullets.push({
+      type: 'bullet',
+      x: messi.x + ux*messi.r, y: messi.y + uy*messi.r,
+      vx: ux*22, vy: uy*22,
+      r: 3,
+      dmg: 2.0, knock: 6, life: 500,
+      pierce: 3,
+    });
+  } else {
+    // missile — homing-ish, AOE
+    bullets.push({
+      type: 'missile',
+      x: messi.x + ux*messi.r, y: messi.y + uy*messi.r,
+      vx: ux*7, vy: uy*7,
+      r: 5,
+      dmg: 8, knock: 24, life: 1400,
+      explode: 90, pierce: 0,
+      smokeT: 0,
+    });
+  }
+}
+
+// ============================================================
+//   PARTICLES & FX
+// ============================================================
+function addParticles(x, y, n, color, speed=3, life=400) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random()*Math.PI*2;
+    const v = Math.random()*speed + 0.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(a)*v, vy: Math.sin(a)*v,
+      life: life + Math.random()*200,
+      maxLife: life,
+      color,
+      r: 1.5 + Math.random()*2,
+    });
+  }
+}
+
+function popup(x, y, text) {
+  const div = document.createElement('div');
+  div.className = 'pop';
+  div.textContent = text;
+  div.style.left = x + 'px';
+  div.style.top = y + 'px';
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 900);
+}
+
+// ============================================================
+//   GAME LOOP
+// ============================================================
+let lastT = performance.now();
+function loop(now) {
+  const dt = Math.min(40, now - lastT);
+  lastT = now;
+  if (state.running && !paused) update(dt, now);
+  render();
+  requestAnimationFrame(loop);
+}
+
+function update(dt, now) {
+  // ----- Messi movement -----
+  let vx = 0, vy = 0;
+  if (keys['w'] || keys['arrowup'])    vy -= 1;
+  if (keys['s'] || keys['arrowdown'])  vy += 1;
+  if (keys['a'] || keys['arrowleft'])  vx -= 1;
+  if (keys['d'] || keys['arrowright']) vx += 1;
+  const mag = Math.hypot(vx, vy);
+  if (mag > 0) { vx /= mag; vy /= mag; }
+
+  let speed = messi.speed;
+  if (keys['shift'] && messi.dashCool <= 0 && mag > 0) {
+    messi.dashing = 12;
+    messi.dashCool = 900;
+  }
+  messi.dashCool = Math.max(0, messi.dashCool - dt);
+  if (messi.dashing > 0) {
+    speed = messi.dashSpeed;
+    messi.dashing--;
+  }
+
+  messi.x = Math.max(messi.r, Math.min(W - messi.r, messi.x + vx*speed));
+  messi.y = Math.max(messi.r, Math.min(H - messi.r, messi.y + vy*speed));
+
+  messi.trail.push({ x: messi.x, y: messi.y, t: 18 });
+  if (messi.trail.length > 18) messi.trail.shift();
+  messi.trail.forEach(p => p.t--);
+
+  // regen (graphene heals slowly)
+  messi.regenT += dt;
+  if (messi.regenT > 500 && messi.hp < messi.maxHp) {
+    messi.hp = Math.min(messi.maxHp, messi.hp + 0.25);
+    messi.regenT = 0;
+  }
+
+  // ----- shooting -----
+  if (mouse.down) fireShot(now);
+
+  // ----- foes -----
+  for (const f of foes) {
+    const dx = messi.x - f.x;
+    const dy = messi.y - f.y;
+    const d  = Math.hypot(dx, dy) || 1;
+    const ux = dx/d, uy = dy/d;
+    f.facing = Math.atan2(uy, ux);
+
+    if (f.type === 'archer') {
+      // keeps distance, fires arrows
+      let mv = 0;
+      if (d > f.preferDist + 40)      mv = 1;
+      else if (d < f.preferDist - 60) mv = -1;
+      f.x += ux * f.speed * mv;
+      f.y += uy * f.speed * mv;
+      f.cooldown -= dt;
+      if (f.cooldown <= 0 && d < 600) {
+        f.cooldown = 1400 + Math.random()*800;
+        // fire arrow
+        bullets.push({
+          type: 'arrow', enemy: true,
+          x: f.x, y: f.y,
+          vx: ux*5, vy: uy*5,
+          r: 3,
+          dmg: 6, life: 1400,
+        });
+      }
+    } else if (f.type === 'cavalry') {
+      f.x += ux * f.speed;
+      f.y += uy * f.speed;
+      if (d < messi.r + f.r + 2) {
+        damageMessi(14);
+        f.hp = 0; // self-destructs on impact
+        addParticles(f.x, f.y, 10, '#955d3b');
+      }
+    } else {
+      // footman
+      f.x += ux * f.speed;
+      f.y += uy * f.speed;
+      if (d < messi.r + f.r + 1) {
+        damageMessi(6);
+        // bounce off
+        f.x -= ux * 6;
+        f.y -= uy * 6;
+      }
+    }
+  }
+
+  // ----- BOSS -----
+  if (boss) {
+    boss.angle += dt * 0.002;
+    boss.summonT += dt;
+    const dx = messi.x - boss.x;
+    const dy = messi.y - boss.y;
+    const d  = Math.hypot(dx, dy) || 1;
+    const ux = dx/d, uy = dy/d;
+
+    boss.x += ux * boss.speed;
+    boss.y += uy * boss.speed;
+
+    boss.cooldown -= dt;
+    if (boss.cooldown <= 0) {
+      // fan of 5 arrows
+      boss.cooldown = boss.phase === 3 ? 700 : (boss.phase === 2 ? 1100 : 1600);
+      const baseA = Math.atan2(uy, ux);
+      const n = boss.phase === 3 ? 9 : (boss.phase === 2 ? 7 : 5);
+      for (let i = 0; i < n; i++) {
+        const a = baseA + (i - (n-1)/2) * 0.18;
+        bullets.push({
+          type: 'arrow', enemy: true,
+          x: boss.x, y: boss.y,
+          vx: Math.cos(a)*5.5, vy: Math.sin(a)*5.5,
+          r: 3.5,
+          dmg: 7, life: 1800,
+        });
+      }
+    }
+
+    // summon cavalry every 6s in phase 2/3
+    if (boss.summonT > 6000 && boss.phase >= 2) {
+      boss.summonT = 0;
+      for (let i = 0; i < 4; i++) spawnFoe('cavalry');
+    }
+
+    // phase transitions
+    if (boss.hp < boss.maxHp * 0.66 && boss.phase < 2) { boss.phase = 2; boss.speed = 1.8; }
+    if (boss.hp < boss.maxHp * 0.33 && boss.phase < 3) { boss.phase = 3; boss.speed = 2.4; }
+
+    // contact damage
+    if (d < messi.r + boss.r) {
+      damageMessi(0.6);  // sustained
+    }
+  }
+
+  // ----- bullets -----
+  for (const b of bullets) {
+    b.x += b.vx;
+    b.y += b.vy;
+    b.life -= dt;
+    if (b.type === 'missile') {
+      b.smokeT = (b.smokeT || 0) + dt;
+      if (b.smokeT > 30) {
+        b.smokeT = 0;
+        addParticles(b.x, b.y, 1, '#c95a3a', 0.5, 250);
+      }
+    }
+    if (b.type === 'football') b.spin = (b.spin || 0) + 0.4;
+    if (b.x < -50 || b.x > W+50 || b.y < -50 || b.y > H+50) b.life = 0;
+  }
+
+  // ----- collisions -----
+  // bullets vs foes
+  for (const b of bullets) {
+    if (b.enemy) continue;
+    if (b.life <= 0) continue;
+    // check against boss
+    if (boss && hit(b, boss)) {
+      boss.hp -= b.dmg;
+      addParticles(b.x, b.y, 6, '#ffcf6b');
+      if (b.type === 'missile') {
+        explode(b);
+        b.life = 0;
+        continue;
+      } else if (b.pierce > 1) b.pierce--;
+      else b.life = 0;
+      if (boss.hp <= 0) onBossDead();
+    }
+    for (const f of foes) {
+      if (f.hp <= 0) continue;
+      if (!hit(b, f)) continue;
+      f.hp -= b.dmg;
+      // knockback
+      const dx = f.x - messi.x, dy = f.y - messi.y;
+      const dl = Math.hypot(dx,dy) || 1;
+      f.x += (dx/dl) * b.knock;
+      f.y += (dy/dl) * b.knock;
+      addParticles(b.x, b.y, 5, f.color);
+      if (b.type === 'missile') {
+        explode(b);
+        b.life = 0;
+        break;
+      } else if (b.pierce > 1) b.pierce--;
+      else { b.life = 0; break; }
+    }
+  }
+  // enemy arrows vs Messi
+  for (const b of bullets) {
+    if (!b.enemy || b.life <= 0) continue;
+    if (Math.hypot(b.x - messi.x, b.y - messi.y) < messi.r + b.r) {
+      damageMessi(b.dmg);
+      b.life = 0;
+      addParticles(b.x, b.y, 3, '#d2864a');
+    }
+  }
+
+  // cleanup
+  foes = foes.filter(f => {
+    if (f.hp <= 0) {
+      state.kills++;
+      addParticles(f.x, f.y, 8, f.color);
+      return false;
+    }
+    return true;
+  });
+  bullets   = bullets.filter(b => b.life > 0);
+  particles = particles.filter(p => { p.life -= dt; p.x += p.vx; p.y += p.vy; p.vx *= 0.96; p.vy *= 0.96; return p.life > 0; });
+
+  // wave end?
+  if (foes.length === 0 && !boss && state.wave > 0 && state.wave <= WAVES.length) {
+    nextWave();
+  }
+
+  updateHud();
+}
+
+function hit(b, f) {
+  return Math.hypot(b.x - f.x, b.y - f.y) < (b.r + f.r);
+}
+
+function explode(b) {
+  addParticles(b.x, b.y, 24, '#ffb070', 5, 600);
+  for (const f of foes) {
+    const d = Math.hypot(f.x - b.x, f.y - b.y);
+    if (d < b.explode) {
+      f.hp -= b.dmg;
+      const dx = f.x - b.x, dy = f.y - b.y;
+      const dl = Math.hypot(dx,dy) || 1;
+      f.x += (dx/dl) * 30;
+      f.y += (dy/dl) * 30;
+    }
+  }
+  if (boss) {
+    const d = Math.hypot(boss.x - b.x, boss.y - b.y);
+    if (d < b.explode) boss.hp -= b.dmg * 0.4;
+  }
+}
+
+function damageMessi(amt) {
+  if (messi.dashing > 0) return;  // i-frames during dash
+  messi.hp -= amt;
+  messi.regenT = 0;
+  if (messi.hp <= 0 && state.running) {
+    onMessiDead();
+  }
+}
+
+// ============================================================
+//   RENDER
+// ============================================================
+function render() {
+  ctx.fillStyle = '#050608';
+  ctx.fillRect(0, 0, W, H);
+
+  // arena tint
+  const grad = ctx.createRadialGradient(W/2, H/2, 50, W/2, H/2, Math.max(W, H)/1.4);
+  grad.addColorStop(0, 'rgba(79, 106, 173, 0.06)');
+  grad.addColorStop(1, 'rgba(5,6,8,0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = 'rgba(79,106,173,0.05)';
+  ctx.lineWidth = 1;
+  const step = 60;
+  for (let x = 0; x < W; x += step) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += step) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // particles
+  for (const p of particles) {
+    const a = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = a;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // foes
+  for (const f of foes) drawFoe(f);
+  if (boss) drawBoss(boss);
+
+  // bullets
+  for (const b of bullets) drawBullet(b);
+
+  // Messi trail
+  for (let i = 0; i < messi.trail.length; i++) {
+    const p = messi.trail[i];
+    const a = (p.t / 18) * 0.5;
+    ctx.fillStyle = `rgba(122, 184, 232, ${a})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, messi.r * (p.t/18), 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Messi
+  drawMessi();
+
+  // aim line
+  if (state.running) {
+    ctx.strokeStyle = 'rgba(122, 184, 232, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.moveTo(messi.x, messi.y);
+    ctx.lineTo(mouse.x, mouse.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (paused && state.running) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'italic 600 48px "Aptos", "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('paused', W/2, H/2);
+  }
+}
+
+function drawMessi() {
+  ctx.save();
+  ctx.translate(messi.x, messi.y);
+  // body
+  ctx.fillStyle = '#7ab8e8';
+  ctx.beginPath();
+  ctx.arc(0, 0, messi.r, 0, Math.PI*2);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+  // facing direction
+  const dx = mouse.x - messi.x, dy = mouse.y - messi.y;
+  const a = Math.atan2(dy, dx);
+  ctx.rotate(a);
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(messi.r + 5, 0);
+  ctx.lineTo(messi.r - 2, 4);
+  ctx.lineTo(messi.r - 2, -4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFoe(f) {
+  ctx.save();
+  ctx.translate(f.x, f.y);
+  ctx.rotate(f.facing);
+  if (f.type === 'footman') {
+    ctx.fillStyle = f.color;
+    ctx.beginPath();
+    ctx.moveTo(f.r, 0);
+    ctx.lineTo(-f.r*0.7, f.r*0.7);
+    ctx.lineTo(-f.r*0.7, -f.r*0.7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#3a2410';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  } else if (f.type === 'archer') {
+    ctx.fillStyle = f.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, f.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#5e4830';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // bow line
+    ctx.strokeStyle = '#1c1c1c';
+    ctx.beginPath();
+    ctx.moveTo(f.r, -f.r*0.6);
+    ctx.lineTo(f.r, f.r*0.6);
+    ctx.stroke();
+  } else if (f.type === 'cavalry') {
+    ctx.fillStyle = f.color;
+    ctx.fillRect(-f.r, -f.r*0.7, f.r*2, f.r*1.4);
+    ctx.strokeStyle = '#2c1e0e';
+    ctx.lineWidth = 1.4;
+    ctx.strokeRect(-f.r, -f.r*0.7, f.r*2, f.r*1.4);
+    // lance
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(f.r, 0);
+    ctx.lineTo(f.r+10, 0);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBoss(b) {
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.rotate(b.angle);
+  // gold star
+  ctx.fillStyle = b.color;
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const rr = (i % 2 === 0) ? b.r : b.r * 0.55;
+    ctx.lineTo(Math.cos(a)*rr, Math.sin(a)*rr);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#9c5a18';
+  ctx.stroke();
+  // inner
+  ctx.fillStyle = '#cc7a2a';
+  ctx.beginPath();
+  ctx.arc(0, 0, b.r*0.35, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // phase glow
+  ctx.save();
+  ctx.globalAlpha = 0.25 + 0.2 * Math.sin(performance.now()*0.005);
+  const gr = ctx.createRadialGradient(b.x, b.y, b.r*0.5, b.x, b.y, b.r*2.4);
+  gr.addColorStop(0, 'rgba(255, 207, 107, 0.5)');
+  gr.addColorStop(1, 'rgba(255, 207, 107, 0)');
+  ctx.fillStyle = gr;
+  ctx.beginPath();
+  ctx.arc(b.x, b.y, b.r*2.4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBullet(b) {
+  ctx.save();
+  if (b.type === 'football') {
+    ctx.translate(b.x, b.y);
+    ctx.rotate(b.spin || 0);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, b.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // hex patterning
+    ctx.fillStyle = '#1c1c1c';
+    ctx.beginPath();
+    ctx.arc(0, 0, b.r*0.3, 0, Math.PI*2);
+    ctx.fill();
+  } else if (b.type === 'bullet') {
+    ctx.strokeStyle = '#7ab8e8';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - b.vx*0.8, b.y - b.vy*0.8);
+    ctx.stroke();
+  } else if (b.type === 'missile') {
+    ctx.fillStyle = '#ff6b3a';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  } else if (b.type === 'arrow') {
+    ctx.strokeStyle = '#d2864a';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - b.vx*1.2, b.y - b.vy*1.2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ============================================================
+//   HUD / FLOW
+// ============================================================
+function updateHud() {
+  const hpPct = Math.max(0, messi.hp) / messi.maxHp * 100;
+  document.getElementById('hpVal').textContent = Math.ceil(Math.max(0, messi.hp));
+  const fill = document.getElementById('hpFill');
+  fill.style.width = hpPct + '%';
+  fill.classList.toggle('low', hpPct < 30);
+
+  document.getElementById('waveVal').textContent = state.wave + ' / ' + WAVES.length;
+  const remain = foes.length + (boss ? 1 : 0);
+  document.getElementById('foeVal').textContent = remain;
+  document.getElementById('killVal').textContent = state.kills;
+
+  const bw = document.getElementById('bossHpWrap');
+  if (boss) {
+    bw.classList.add('on');
+    document.getElementById('bossFill').style.width = (boss.hp / boss.maxHp * 100) + '%';
+  } else bw.classList.remove('on');
+}
+
+function nextWave() {
+  state.wave++;
+  if (state.wave > WAVES.length) {
+    onVictory();
+    return;
+  }
+  const w = WAVES[state.wave - 1];
+  document.getElementById('waveLabel').textContent = w.label;
+  document.getElementById('waveTitle').textContent = w.title;
+  document.getElementById('waveDesc').textContent  = w.desc;
+  document.getElementById('waveFoes').textContent  = w.foes;
+  state.running = false;
+  document.getElementById('waveModal').classList.remove('hidden');
+}
+
+function startWave() {
+  const w = WAVES[state.wave - 1];
+  const s = w.spawn;
+  if (s.footman)  for (let i = 0; i < s.footman; i++)  spawnFoe('footman');
+  if (s.archer)   for (let i = 0; i < s.archer; i++)   spawnFoe('archer');
+  if (s.cavalry)  for (let i = 0; i < s.cavalry; i++)  spawnFoe('cavalry');
+  if (s.boss)     spawnBoss();
+  document.getElementById('waveModal').classList.add('hidden');
+  state.running = true;
+  paused = false;
+}
+
+function onBossDead() {
+  addParticles(boss.x, boss.y, 80, '#ffcf6b', 6, 1200);
+  boss = null;
+}
+
+function onMessiDead() {
+  state.running = false;
+  document.getElementById('endStrap').textContent = 'DEFEAT';
+  document.getElementById('endTitle').textContent = 'The steppe wins.';
+  document.getElementById('endText').textContent = "Even graphene has its limits. A composite-bow arrow finds the seam between scapula and clavicle. The greatest who ever lived crumples into the dust of the Onon valley.";
+  showEnd();
+}
+
+function onVictory() {
+  state.running = false;
+  document.getElementById('endStrap').textContent = 'VICTORY';
+  document.getElementById('endTitle').textContent = "Final whistle on the Mongol Empire.";
+  document.getElementById('endText').textContent = "Genghis Khan lies still. The Yeke Mongol Ulus dissolves before it can be born. World history pivots on a free kick.";
+  showEnd();
+}
+
+function showEnd() {
+  document.getElementById('endWaves').textContent = Math.min(state.wave, WAVES.length) + ' / ' + WAVES.length;
+  document.getElementById('endKills').textContent = state.kills;
+  const dt = (performance.now() - state.startedAt) / 1000;
+  document.getElementById('endTime').textContent  = dt.toFixed(1) + ' s';
+  document.getElementById('endModal').classList.remove('hidden');
+}
+
+function reset() {
+  foes = []; bullets = []; particles = []; boss = null;
+  messi.x = W/2; messi.y = H/2;
+  messi.hp = messi.maxHp;
+  messi.trail = [];
+  messi.dashCool = 0; messi.dashing = 0;
+  state.wave = 0;
+  state.kills = 0;
+  state.startedAt = performance.now();
+  setShot(0);
+}
+
+// ============================================================
+//   WIRE UP
+// ============================================================
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('introModal').classList.add('hidden');
+  document.getElementById('hud').style.display = 'flex';
+  reset();
+  state.wave = 0;
+  nextWave();
+});
+document.getElementById('waveBtn').addEventListener('click', startWave);
+document.getElementById('restartBtn').addEventListener('click', () => {
+  document.getElementById('endModal').classList.add('hidden');
+  reset();
+  state.wave = 0;
+  nextWave();
+});
+document.getElementById('restartLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('endModal').classList.add('hidden');
+  document.getElementById('waveModal').classList.add('hidden');
+  reset();
+  state.wave = 0;
+  nextWave();
+});
+
+document.querySelectorAll('.shot').forEach(el => {
+  el.addEventListener('click', () => setShot(parseInt(el.dataset.shot)));
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
