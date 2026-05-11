@@ -102,7 +102,7 @@
       <div class="map-controls">
         <div class="ctrl-row">
           <label class="ctrl-label">
-            <span>Block dim X</span>
+            <span>Block dim X <span class="ctrl-hint">&mdash; threads across (rows)</span></span>
             <span class="ctrl-val"><b id="bxVal">16</b></span>
           </label>
           <input class="slider" type="range" id="bxSlider"
@@ -110,11 +110,17 @@
           <div class="slider-marks">
             <span>1</span><span>8</span><span>16</span><span>24</span><span>32</span>
           </div>
+          <p class="ctrl-tip">
+            <em>What it does:</em> width of one tile of threads. The GPU
+            groups <strong>32 neighbouring threads</strong> into a
+            <strong>warp</strong>, so X = 32 lets one warp read one row of
+            32 contiguous floats in a single memory transaction.
+          </p>
         </div>
 
         <div class="ctrl-row">
           <label class="ctrl-label">
-            <span>Block dim Y</span>
+            <span>Block dim Y <span class="ctrl-hint">&mdash; threads down (columns)</span></span>
             <span class="ctrl-val"><b id="byVal">16</b></span>
           </label>
           <input class="slider" type="range" id="bySlider"
@@ -122,37 +128,57 @@
           <div class="slider-marks">
             <span>1</span><span>8</span><span>16</span><span>24</span><span>32</span>
           </div>
+          <p class="ctrl-tip">
+            <em>What it does:</em> height of the tile.
+            <strong>Threads / block = X &times; Y</strong>, capped at 1024.
+            Bigger blocks &rArr; fewer blocks per SM. Smaller blocks &rArr;
+            more blocks per SM but more launch overhead.
+          </p>
         </div>
 
         <div class="ctrl-row">
-          <span class="ctrl-label" style="margin-bottom:0.6rem;display:block;">Memory pattern</span>
+          <span class="ctrl-label" style="margin-bottom:0.4rem;display:block;">
+            Memory pattern <span class="ctrl-hint">&mdash; how data moves between RAM and the SM</span>
+          </span>
+          <p class="ctrl-tip" style="margin-top:0;margin-bottom:0.8rem;">
+            <em>Why it matters:</em> a GPU's compute is much faster than its
+            memory. The trick is to <strong>read each value once</strong>
+            and re-use it &mdash; not fetch it from far-away DRAM every iteration.
+          </p>
           <div class="mem-options">
             <label class="mem-opt">
               <input type="radio" name="mem" value="global">
               <span class="mem-card">
                 <b>Global only</b>
-                <em>4 reads + 1 write to global per cell</em>
+                <em>Every thread reads its 4 neighbours from main GPU RAM
+                each iteration &mdash; <strong>slowest</strong>, simple to write.</em>
               </span>
             </label>
             <label class="mem-opt">
               <input type="radio" name="mem" value="pingpong" checked>
               <span class="mem-card">
-                <b>Ping-pong global</b>
-                <em>Double-buffer u<sub>n</sub> / u<sub>n+1</sub></em>
+                <b>Ping-pong buffers</b>
+                <em>Keep two copies of the field (old / new) so threads
+                never read what other threads are writing in the same step
+                &mdash; <strong>correctness fix</strong>, modest speedup.</em>
               </span>
             </label>
             <label class="mem-opt">
               <input type="radio" name="mem" value="shared">
               <span class="mem-card">
                 <b>Shared-memory tiling</b>
-                <em>Stage tiles into SM shared memory</em>
+                <em>Each block copies its tile into the SM's tiny on-chip
+                cache once, then re-reads from there &mdash;
+                <strong>much faster</strong> than DRAM.</em>
               </span>
             </label>
             <label class="mem-opt">
               <input type="radio" name="mem" value="sharedpp">
               <span class="mem-card">
                 <b>Shared + ping-pong</b>
-                <em>Tiled + double-buffered &mdash; the cuBLAS-style win</em>
+                <em>Both at once &mdash; tiles in the on-chip cache + two
+                buffers. The standard <strong>production recipe</strong> for
+                stencil solvers.</em>
               </span>
             </label>
           </div>
@@ -212,22 +238,34 @@
 
       <div class="bars">
         <div class="bar">
-          <span class="bar-k">occupancy</span>
+          <div class="bar-label">
+            <span class="bar-k">occupancy</span>
+            <em class="bar-tip">how full each SM is &mdash; more active warps hide memory waits</em>
+          </div>
           <div class="bar-track"><div class="bar-fill" id="occBar"></div></div>
           <span class="bar-v" id="occVal">&mdash;</span>
         </div>
         <div class="bar">
-          <span class="bar-k">warp efficiency</span>
+          <div class="bar-label">
+            <span class="bar-k">warp efficiency</span>
+            <em class="bar-tip">are all 32 lanes of every warp doing work? non-multiples-of-32 lose lanes</em>
+          </div>
           <div class="bar-track"><div class="bar-fill" id="weBar"></div></div>
           <span class="bar-v" id="weVal">&mdash;</span>
         </div>
         <div class="bar">
-          <span class="bar-k">coalescing</span>
+          <div class="bar-label">
+            <span class="bar-k">coalescing</span>
+            <em class="bar-tip">a warp reading 32 contiguous floats = 1 transaction; scattered reads = many</em>
+          </div>
           <div class="bar-track"><div class="bar-fill" id="coBar"></div></div>
           <span class="bar-v" id="coVal">&mdash;</span>
         </div>
         <div class="bar">
-          <span class="bar-k">memory pattern</span>
+          <div class="bar-label">
+            <span class="bar-k">memory pattern</span>
+            <em class="bar-tip">how much of peak bandwidth your access pattern actually achieves</em>
+          </div>
           <div class="bar-track"><div class="bar-fill" id="meBar"></div></div>
           <span class="bar-v" id="meVal">&mdash;</span>
         </div>
