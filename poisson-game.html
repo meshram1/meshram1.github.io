@@ -89,10 +89,10 @@
     </p>
   </section>
 
-  <!-- ============ 04 MAPPING ============ -->
+  <!-- ============ 03 MAPPING ============ -->
   <section class="game-section">
     <div class="section-head">
-      <span class="sec-num">/ 04</span>
+      <span class="sec-num">/ 03</span>
       <h2 class="sec-title">Map software topology &rarr; hardware</h2>
     </div>
 
@@ -102,7 +102,7 @@
       <div class="map-controls">
         <div class="ctrl-row">
           <label class="ctrl-label">
-            <span>Block dim X <span class="ctrl-hint">&mdash; threads across (rows)</span></span>
+            <span>Block dim X</span>
             <span class="ctrl-val"><b id="bxVal">16</b></span>
           </label>
           <input class="slider" type="range" id="bxSlider"
@@ -110,17 +110,11 @@
           <div class="slider-marks">
             <span>1</span><span>8</span><span>16</span><span>24</span><span>32</span>
           </div>
-          <p class="ctrl-tip">
-            <em>What it does:</em> width of one tile of threads. The GPU
-            groups <strong>32 neighbouring threads</strong> into a
-            <strong>warp</strong>, so X = 32 lets one warp read one row of
-            32 contiguous floats in a single memory transaction.
-          </p>
         </div>
 
         <div class="ctrl-row">
           <label class="ctrl-label">
-            <span>Block dim Y <span class="ctrl-hint">&mdash; threads down (columns)</span></span>
+            <span>Block dim Y</span>
             <span class="ctrl-val"><b id="byVal">16</b></span>
           </label>
           <input class="slider" type="range" id="bySlider"
@@ -128,23 +122,10 @@
           <div class="slider-marks">
             <span>1</span><span>8</span><span>16</span><span>24</span><span>32</span>
           </div>
-          <p class="ctrl-tip">
-            <em>What it does:</em> height of the tile.
-            <strong>Threads / block = X &times; Y</strong>, capped at 1024.
-            Bigger blocks &rArr; fewer blocks per SM. Smaller blocks &rArr;
-            more blocks per SM but more launch overhead.
-          </p>
         </div>
 
         <div class="ctrl-row">
-          <span class="ctrl-label" style="margin-bottom:0.4rem;display:block;">
-            Memory pattern <span class="ctrl-hint">&mdash; how data moves between RAM and the SM</span>
-          </span>
-          <p class="ctrl-tip" style="margin-top:0;margin-bottom:0.8rem;">
-            <em>Why it matters:</em> a GPU's compute is much faster than its
-            memory. The trick is to <strong>read each value once</strong>
-            and re-use it &mdash; not fetch it from far-away DRAM every iteration.
-          </p>
+          <span class="ctrl-label" style="margin-bottom:0.6rem;display:block;">Memory pattern</span>
           <div class="mem-options">
             <label class="mem-opt">
               <input type="radio" name="mem" value="global">
@@ -212,10 +193,10 @@
     </div>
   </section>
 
-  <!-- ============ 05 RESULTS ============ -->
+  <!-- ============ 04 RESULTS ============ -->
   <section class="game-section">
     <div class="section-head">
-      <span class="sec-num">/ 05</span>
+      <span class="sec-num">/ 04</span>
       <h2 class="sec-title">Result</h2>
     </div>
 
@@ -238,34 +219,22 @@
 
       <div class="bars">
         <div class="bar">
-          <div class="bar-label">
-            <span class="bar-k">occupancy</span>
-            <em class="bar-tip">how full each SM is &mdash; more active warps hide memory waits</em>
-          </div>
+          <span class="bar-k">occupancy</span>
           <div class="bar-track"><div class="bar-fill" id="occBar"></div></div>
           <span class="bar-v" id="occVal">&mdash;</span>
         </div>
         <div class="bar">
-          <div class="bar-label">
-            <span class="bar-k">warp efficiency</span>
-            <em class="bar-tip">are all 32 lanes of every warp doing work? non-multiples-of-32 lose lanes</em>
-          </div>
+          <span class="bar-k">warp efficiency</span>
           <div class="bar-track"><div class="bar-fill" id="weBar"></div></div>
           <span class="bar-v" id="weVal">&mdash;</span>
         </div>
         <div class="bar">
-          <div class="bar-label">
-            <span class="bar-k">coalescing</span>
-            <em class="bar-tip">a warp reading 32 contiguous floats = 1 transaction; scattered reads = many</em>
-          </div>
+          <span class="bar-k">coalescing</span>
           <div class="bar-track"><div class="bar-fill" id="coBar"></div></div>
           <span class="bar-v" id="coVal">&mdash;</span>
         </div>
         <div class="bar">
-          <div class="bar-label">
-            <span class="bar-k">memory pattern</span>
-            <em class="bar-tip">how much of peak bandwidth your access pattern actually achieves</em>
-          </div>
+          <span class="bar-k">memory pattern</span>
           <div class="bar-track"><div class="bar-fill" id="meBar"></div></div>
           <span class="bar-v" id="meVal">&mdash;</span>
         </div>
@@ -292,10 +261,10 @@
     <div class="advice" id="advice"></div>
   </section>
 
-  <!-- ============ 06 NOTES ============ -->
+  <!-- ============ 05 NOTES ============ -->
   <section class="game-section">
     <div class="section-head">
-      <span class="sec-num">/ 06</span>
+      <span class="sec-num">/ 05</span>
       <h2 class="sec-title">Notes on the model</h2>
     </div>
     <div class="notes">
