@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poisson GPU Mapping Lab &mdash; Aditya Kumar Meshram</title>
+  <meta name="description" content="An interactive lab to explore how virtual (thread / block / grid) topology maps onto physical GPU architecture for a fixed Poisson solver workload." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="poisson-game.css" />
+</head>
+<body class="game-body">
+
+  <!-- ============ NAV ============ -->
+  <nav class="nav">
+    <a href="index.html#home" class="brand-tile" aria-label="home">
+      <span class="brand-glyph">a</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#home">Home</a></li>
+      <li><a href="index.html#projects">Projects</a></li>
+      <li><a href="poisson-game.html" class="active">Lab</a></li>
+      <li><a href="index.html#education">Education</a></li>
+      <li><a href="index.html#links">Links</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============ HEADER ============ -->
+  <header class="game-header">
+    <p class="kicker"><span class="kicker-dot"></span>interactive lab &middot; gpu mapping</p>
+    <h1 class="display">
+      Poisson <span class="display-em">Mapping Lab.</span>
+    </h1>
+    <p class="lede" style="max-width:760px;">
+      The <em>problem is fixed</em>. The mapping isn't. Pick the hardware,
+      decide how the threads, blocks, and grid should land on the silicon &mdash;
+      and try to solve it in the <em>least time</em> and <em>least cost</em>.
+    </p>
+  </header>
+
+  <!-- ============ THE PROBLEM (constant) ============ -->
+  <section class="game-section">
+    <div class="section-head">
+      <span class="sec-num">/ 01</span>
+      <h2 class="sec-title">The Problem &mdash; held constant</h2>
+    </div>
+
+    <div class="problem-grid">
+      <div class="prob-card">
+        <span class="pc-k">equation</span>
+        <span class="pc-v"><em>&nabla;<sup>2</sup>u = f</em></span>
+        <span class="pc-note">2D Poisson, Dirichlet BCs</span>
+      </div>
+      <div class="prob-card">
+        <span class="pc-k">grid</span>
+        <span class="pc-v">1024 &times; 1024</span>
+        <span class="pc-note">1,048,576 cells</span>
+      </div>
+      <div class="prob-card">
+        <span class="pc-k">solver</span>
+        <span class="pc-v">Jacobi</span>
+        <span class="pc-note">5-point stencil</span>
+      </div>
+      <div class="prob-card">
+        <span class="pc-k">iterations</span>
+        <span class="pc-v">10,000</span>
+        <span class="pc-note">tol &asymp; 10<sup>&minus;6</sup></span>
+      </div>
+      <div class="prob-card">
+        <span class="pc-k">total work</span>
+        <span class="pc-v">73.4 GFLOP</span>
+        <span class="pc-note">7 FLOP &times; cells &times; iters</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 HARDWARE ============ -->
+  <section class="game-section">
+    <div class="section-head">
+      <span class="sec-num">/ 02</span>
+      <h2 class="sec-title">Choose physical hardware</h2>
+    </div>
+
+    <div class="gpu-grid" id="gpuGrid"><!-- filled by JS --></div>
+
+    <p class="hint">
+      <em>Tip:</em> the cheapest GPU isn't always the cheapest run &mdash;
+      a slower card runs for longer. Conversely the fastest card may not
+      pay for itself on a small problem.
+    </p>
+  </section>
+
+  <!-- ============ 03 MAPPING ============ -->
+  <section class="game-section">
+    <div class="section-head">
+      <span class="sec-num">/ 03</span>
+      <h2 class="sec-title">Map software topology &rarr; hardware</h2>
+    </div>
+
+    <div class="map-grid">
+
+      <!-- left: controls -->
+      <div class="map-controls">
+        <div class="ctrl-row">
+          <label class="ctrl-label">
+            <span>Block dim X</span>
+            <span class="ctrl-val"><b id="bxVal">16</b></span>
+          </label>
+          <input class="slider" type="range" id="bxSlider"
+                 min="1" max="32" step="1" value="16">
+          <div class="slider-marks">
+            <span>1</span><span>8</span><span>16</span><span>24</span><span>32</span>
+          </div>
+        </div>
+
+        <div class="ctrl-row">
+          <label class="ctrl-label">
+            <span>Block dim Y</span>
+            <span class="ctrl-val"><b id="byVal">16</b></span>
+          </label>
+          <input class="slider" type="range" id="bySlider"
+                 min="1" max="32" step="1" value="16">
+          <div class="slider-marks">
+            <span>1</span><span>8</span><span>16</span><span>24</span><span>32</span>
+          </div>
+        </div>
+
+        <div class="ctrl-row">
+          <span class="ctrl-label" style="margin-bottom:0.6rem;display:block;">Memory pattern</span>
+          <div class="mem-options">
+            <label class="mem-opt">
+              <input type="radio" name="mem" value="global">
+              <span class="mem-card">
+                <b>Global only</b>
+                <em>4 reads + 1 write to global per cell</em>
+              </span>
+            </label>
+            <label class="mem-opt">
+              <input type="radio" name="mem" value="pingpong" checked>
+              <span class="mem-card">
+                <b>Ping-pong global</b>
+                <em>Double-buffer u<sub>n</sub> / u<sub>n+1</sub></em>
+              </span>
+            </label>
+            <label class="mem-opt">
+              <input type="radio" name="mem" value="shared">
+              <span class="mem-card">
+                <b>Shared-memory tiling</b>
+                <em>Stage tiles into SM shared memory</em>
+              </span>
+            </label>
+            <label class="mem-opt">
+              <input type="radio" name="mem" value="sharedpp">
+              <span class="mem-card">
+                <b>Shared + ping-pong</b>
+                <em>Tiled + double-buffered &mdash; the cuBLAS-style win</em>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="derived-grid">
+          <div class="derived"><span>threads / block</span><b id="tpbVal">256</b></div>
+          <div class="derived"><span>warps / block</span><b id="wpbVal">8</b></div>
+          <div class="derived"><span>grid (blocks)</span><b id="gridVal">64 &times; 64</b></div>
+          <div class="derived"><span>total threads</span><b id="ttVal">1.05M</b></div>
+        </div>
+      </div>
+
+      <!-- right: visualization -->
+      <div class="map-viz">
+        <div class="viz-head">
+          <span class="viz-title">virtual &rarr; physical mapping</span>
+          <span class="viz-legend">
+            <span class="lg lg-ok"></span>active
+            <span class="lg lg-mid"></span>partial
+            <span class="lg lg-off"></span>idle
+          </span>
+        </div>
+        <svg id="vizSvg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="viz-foot">
+          <div><span>warp size</span><b>32</b></div>
+          <div><span>SMs in use</span><b id="smUseVal">&mdash;</b></div>
+          <div><span>blocks / SM</span><b id="bpsVal">&mdash;</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 RESULTS ============ -->
+  <section class="game-section">
+    <div class="section-head">
+      <span class="sec-num">/ 04</span>
+      <h2 class="sec-title">Result</h2>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-big">
+        <div class="rb-row">
+          <span class="rb-k">time to solve</span>
+          <span class="rb-v" id="timeVal">&mdash;</span>
+        </div>
+        <div class="rb-row">
+          <span class="rb-k">cost</span>
+          <span class="rb-v" id="costVal">&mdash;</span>
+        </div>
+        <div class="rb-row">
+          <span class="rb-k">score</span>
+          <span class="rb-v score" id="scoreVal">&mdash;</span>
+        </div>
+        <button class="btn primary run-btn" id="runBtn">simulate &rarr;</button>
+      </div>
+
+      <div class="bars">
+        <div class="bar">
+          <span class="bar-k">occupancy</span>
+          <div class="bar-track"><div class="bar-fill" id="occBar"></div></div>
+          <span class="bar-v" id="occVal">&mdash;</span>
+        </div>
+        <div class="bar">
+          <span class="bar-k">warp efficiency</span>
+          <div class="bar-track"><div class="bar-fill" id="weBar"></div></div>
+          <span class="bar-v" id="weVal">&mdash;</span>
+        </div>
+        <div class="bar">
+          <span class="bar-k">coalescing</span>
+          <div class="bar-track"><div class="bar-fill" id="coBar"></div></div>
+          <span class="bar-v" id="coVal">&mdash;</span>
+        </div>
+        <div class="bar">
+          <span class="bar-k">memory pattern</span>
+          <div class="bar-track"><div class="bar-fill" id="meBar"></div></div>
+          <span class="bar-v" id="meVal">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="best-card">
+        <span class="best-k">your best so far</span>
+        <div class="best-row">
+          <span>time</span>
+          <b id="bestTime">&mdash;</b>
+        </div>
+        <div class="best-row">
+          <span>cost</span>
+          <b id="bestCost">&mdash;</b>
+        </div>
+        <div class="best-row">
+          <span>config</span>
+          <b id="bestConf">&mdash;</b>
+        </div>
+        <button class="btn ghost" id="resetBest">reset best</button>
+      </div>
+    </div>
+
+    <div class="advice" id="advice"></div>
+  </section>
+
+  <!-- ============ 05 NOTES ============ -->
+  <section class="game-section">
+    <div class="section-head">
+      <span class="sec-num">/ 05</span>
+      <h2 class="sec-title">Notes on the model</h2>
+    </div>
+    <div class="notes">
+      <p>
+        This is a <em>didactic</em> simulator &mdash; the goal is to internalise
+        how virtual topology (threads, blocks, grid) and physical topology
+        (warps, SMs, memory) compose, not to predict CUDA wall-clock down to
+        the microsecond.
+      </p>
+      <p>
+        <b>Time</b> = total FLOP &divide; (peak FLOP&middot;s<sup>&minus;1</sup>
+        &times; occupancy &times; warp efficiency &times; coalescing &times;
+        memory pattern) &middot; <b>cost</b> = time &times; hourly rate.
+      </p>
+      <p>
+        <b>Warp efficiency</b> drops when threads / block isn't a multiple of
+        32 &mdash; the last warp runs with idle lanes. <b>Coalescing</b>
+        rewards block dim X &asymp; 32 because a warp of 32 contiguous
+        threads should read 32 contiguous floats. <b>Occupancy</b> is bounded
+        by the SM's max threads (2048) and max blocks (32) per SM.
+        <b>Memory pattern</b> scales the achievable fraction of peak
+        throughput &mdash; shared-memory tiling is the biggest single lever.
+      </p>
+      <p>
+        Hardware blocks are placeholders &mdash; SM counts, warps/SM, FLOPs,
+        bandwidth, and $/hr are loosely inspired by real generations but
+        named generically. Swap in your own numbers in
+        <span class="mono">poisson-game.js</span> if you want to model a
+        specific card.
+      </p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>&copy; 2026 Aditya Kumar Meshram</span>
+    <a href="index.html#home">back to portfolio &rarr;</a>
+  </footer>
+
+  <script src="poisson-game.js"></script>
+</body>
+</html>
