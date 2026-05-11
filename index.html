@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aditya Kumar Meshram</title>
+  <meta name="description" content="Aditya Kumar Meshram — graduate researcher in computational fluid dynamics, HPC, and scientific machine learning at Penn State Aerospace." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============== NAV ============== -->
+  <nav class="nav">
+    <a href="#home" class="brand-tile" aria-label="home">
+      <span class="brand-glyph">a</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#home" data-nav="home" class="active">Home</a></li>
+      <li><a href="#projects" data-nav="projects">Projects</a></li>
+      <li><a href="#experience" data-nav="experience">Experience</a></li>
+      <li><a href="#education" data-nav="education">Education</a></li>
+      <li><a href="#leadership" data-nav="leadership">Leadership</a></li>
+      <li><a href="#links" data-nav="links">Links</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============== HOME ============== -->
+  <section id="home" class="home">
+    <div class="home-inner">
+      <p class="kicker"><span class="kicker-dot"></span>graduate researcher &middot; penn state aerospace</p>
+      <h1 class="display">
+        Aditya Kumar<br/>
+        <span class="display-em">Meshram.</span>
+      </h1>
+      <p class="lede">
+        I build numerical algorithms at the intersection of
+        <em>computational fluid dynamics</em>, <em>high-performance computing</em>,
+        and <em>scientific machine learning</em> &mdash; CFD solvers that are
+        physically faithful, GPU code that is genuinely fast, and neural
+        surrogates that learn the physics instead of replacing it.
+      </p>
+      <p class="lede-sub">
+        Currently: M.S. Aerospace Engineering at Penn State (CGPA 3.9, May 2027).
+      </p>
+      <div class="home-actions">
+        <a href="#projects" class="btn primary">view projects &darr;</a>
+        <a href="mailto:adityakmeshram@gmail.com" class="btn ghost">say hello</a>
+      </div>
+    </div>
+    <aside class="home-meta">
+      <div class="meta-row"><span>location</span><b>State College, PA</b></div>
+      <div class="meta-row"><span>focus</span><b>CFD &middot; HPC &middot; SciML</b></div>
+      <div class="meta-row"><span>stack</span><b>C++ &middot; CUDA &middot; PyTorch &middot; Fortran</b></div>
+      <div class="meta-row"><span>status</span><b><span class="live"></span>open to collaborations</b></div>
+    </aside>
+  </section>
+
+  <!-- ============== PROJECTS ============== -->
+  <section id="projects" class="section">
+    <div class="section-head">
+      <span class="sec-num">/ projects</span>
+      <h2 class="sec-title">Technical Projects</h2>
+    </div>
+
+    <div class="filter-row">
+      <span class="filter-label">Filter by:</span>
+      <div class="pills" id="pills">
+        <button class="pill active" data-filter="all" aria-pressed="true">all</button>
+        <button class="pill" data-filter="cfd">cfd <span class="plus">+</span></button>
+        <button class="pill" data-filter="hpc">hpc <span class="plus">+</span></button>
+        <button class="pill" data-filter="cuda">cuda <span class="plus">+</span></button>
+        <button class="pill" data-filter="ml">ml <span class="plus">+</span></button>
+        <button class="pill" data-filter="gpu">gpu <span class="plus">+</span></button>
+        <button class="pill" data-filter="multiphase">multiphase <span class="plus">+</span></button>
+        <button class="pill" data-filter="cpp">c++ <span class="plus">+</span></button>
+        <button class="pill" data-filter="python">python <span class="plus">+</span></button>
+        <button class="pill" data-filter="fortran">fortran <span class="plus">+</span></button>
+        <button class="pill" data-filter="matlab">matlab <span class="plus">+</span></button>
+        <button class="pill" data-filter="aerospace">aerospace <span class="plus">+</span></button>
+      </div>
+    </div>
+
+    <div class="project-list" id="projectList">
+
+      <article class="p-item" data-tags="ml cfd python aerospace">
+        <div class="p-meta">
+          <span class="p-no">01</span>
+          <span class="p-date">Jan&ndash;April 2026</span>
+        </div>
+        <div class="p-body">
+          <h3 class="p-title">Graph Neural Network Surrogate for Airfoil Flow Field Prediction</h3>
+          <p class="p-sub">Real-time CFD inference via mesh-graph message passing</p>
+          <p class="p-by">
+            <span>using</span>
+            <span class="p-by-link">PyTorch Geometric</span>
+            <span>&middot;</span>
+            <a href="https://github.com/meshram1" target="_blank" rel="noopener" class="p-by-link">code &rarr;</a>
+          </p>
+          <div class="p-tags">
+            <span class="tag">ml</span>
+            <span class="tag">cfd</span>
+            <span class="tag">python</span>
+            <span class="tag">aerospace</span>
+            <span class="tag">gnn</span>
+          </div>
+          <p class="p-desc">
+            Trained an <strong>encode-process-decode GNN</strong> in PyTorch
+            Geometric to predict full 2D flow fields
+            <span class="mono">(u, v, p)</span> directly from mesh-graph inputs.
+            The trained network acts as a real-time surrogate for
+            computationally expensive CFD solvers &mdash; the kind of inference
+            speedup that turns design exploration from overnight sweeps into
+            interactive iteration.
+          </p>
+        </div>
+      </article>
+
+      <article class="p-item" data-tags="hpc cuda gpu cpp cfd">
+        <div class="p-meta">
+          <span class="p-no">02</span>
+          <span class="p-date">Dec 2025 &ndash; Jan 2026</span>
+        </div>
+        <div class="p-body">
+          <h3 class="p-title">GPU-Accelerated Poisson Solver</h3>
+          <p class="p-sub">Jacobi iterations on CUDA, 13&times; end-to-end speedup</p>
+          <p class="p-by">
+            <span>built with</span>
+            <span class="p-by-link">CUDA &middot; cuBLAS</span>
+            <span>&middot;</span>
+            <a href="https://github.com/meshram1/GPU-Accelerated-Poisson-Solver" target="_blank" rel="noopener" class="p-by-link">code &rarr;</a>
+          </p>
+          <div class="p-tags">
+            <span class="tag">hpc</span>
+            <span class="tag">cuda</span>
+            <span class="tag">gpu</span>
+            <span class="tag">cpp</span>
+            <span class="tag">cfd</span>
+          </div>
+          <p class="p-desc">
+            Implemented a GPU-accelerated Poisson solver using Jacobi
+            iterations with a custom <strong>tensor abstraction</strong> for
+            host/device memory management. Integrated
+            <strong>cuBLAS</strong> for vector operations and optimized GPU
+            memory access using <strong>ping-pong buffers</strong>. The result:
+            <strong>6&times; per-iteration</strong> speedup and
+            <strong>13&times; end-to-end</strong> over a CPU baseline.
+          </p>
+        </div>
+      </article>
+
+    </div>
+
+    <p class="empty-note" id="emptyNote" hidden>No projects match those filters.</p>
+  </section>
+
+  <!-- ============== EXPERIENCE ============== -->
+  <section id="experience" class="section">
+    <div class="section-head">
+      <span class="sec-num">/ experience</span>
+      <h2 class="sec-title">Research Experience</h2>
+    </div>
+
+    <article class="exp-item">
+      <div class="exp-meta">
+        <span class="exp-no">01</span>
+        <span class="exp-date">Sep 2024 &mdash; Jan 2025</span>
+        <span class="exp-loc">Bengaluru, India</span>
+      </div>
+      <div class="exp-body">
+        <h3 class="exp-title">Research Assistant &mdash; Multiphase Flow Simulations Lab</h3>
+        <p class="exp-org">Indian Institute of Science (IISc) &middot; advisor: Prof. Gaurav Tomar</p>
+        <ul class="exp-list">
+          <li>
+            Developed an unsteady <strong>1D conjugate heat transfer</strong>
+            model from scratch and a <strong>2D conjugate heat transfer</strong>
+            model (using PSI-BOIL) in C++ for a fluid&ndash;solid system.
+          </li>
+          <li>
+            The model was used to study the microscopic and macroscopic
+            <strong>boiling of cooling fluid</strong> inside a nuclear
+            reactor.
+          </li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="exp-item">
+      <div class="exp-meta">
+        <span class="exp-no">02</span>
+        <span class="exp-date">May 2023 &mdash; July 2024</span>
+        <span class="exp-loc">Chennai, India</span>
+      </div>
+      <div class="exp-body">
+        <h3 class="exp-title">Undergraduate Researcher &mdash; Rockets &amp; Missiles Lab</h3>
+        <p class="exp-org">Indian Institute of Technology Madras &middot; advisor: Prof. P. A. Ramakrishna</p>
+        <ul class="exp-list">
+          <li>
+            Developed a <strong>numerical solver</strong> to simulate flow
+            inside NASA's rocket booster, tracking unburned propellant
+            particles to identify <strong>slag accumulation zones</strong>
+            &mdash; data that informs better rocket nozzle design.
+          </li>
+          <li>
+            Code was optimized to run on <strong>AQUA</strong>, the
+            high-performance computing environment at IIT Madras.
+          </li>
+          <li>
+            Findings presented at the
+            <strong>International Conference on Numerical Methods in
+            Multiphase Flows &mdash; 5 (ICNMMF-5)</strong>, June 2024,
+            Reykjav&iacute;k, Iceland.
+          </li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="exp-item">
+      <div class="exp-meta">
+        <span class="exp-no">03</span>
+        <span class="exp-date">Dec 2022 &mdash; Jan 2023</span>
+        <span class="exp-loc">Ahmedabad, India</span>
+      </div>
+      <div class="exp-body">
+        <h3 class="exp-title">Winter Intern &mdash; Space Applications Centre</h3>
+        <p class="exp-org">Indian Space Research Organisation (ISRO) &middot; advisor: Ankush Kumar Kanak</p>
+        <ul class="exp-list">
+          <li>
+            Developed an <strong>automated lunar crater detection algorithm</strong>
+            in MATLAB, using Optical High Resolution Camera data from ISRO's
+            <strong>Chandrayaan-2</strong> payload.
+          </li>
+          <li>
+            Designed a <strong>five-step detection pipeline</strong> &mdash;
+            mathematical methods and thresholding to eliminate redundant
+            detections and enhance accuracy.
+          </li>
+          <li>
+            <strong>Result:</strong> mid-craters of size 4&nbsp;m to 13&nbsp;m
+            detected with <strong>94%</strong> accuracy.
+          </li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============== EDUCATION ============== -->
+  <section id="education" class="section">
+    <div class="section-head">
+      <span class="sec-num">/ education</span>
+      <h2 class="sec-title">Education</h2>
+    </div>
+
+    <article class="edu-item">
+      <div class="edu-when">
+        <span class="edu-date">May 2027</span>
+        <span class="edu-status">in progress</span>
+      </div>
+      <div class="edu-body">
+        <h3>Pennsylvania State University</h3>
+        <p class="edu-degree">M.S., Aerospace Engineering &middot; <span class="hl">CGPA 3.9</span></p>
+        <p class="edu-loc">State College, PA</p>
+        <p class="edu-note">
+          Coursework: Advanced Engineering Mathematics &middot; Concurrent
+          Matrix Multiplication &middot; Machine Learning for Engineering.
+        </p>
+      </div>
+    </article>
+
+    <article class="edu-item">
+      <div class="edu-when">
+        <span class="edu-date">July 2024</span>
+        <span class="edu-status">graduated</span>
+      </div>
+      <div class="edu-body">
+        <h3>Indian Institute of Technology Madras</h3>
+        <p class="edu-degree">B.Tech., Aerospace Engineering</p>
+        <p class="edu-loc">Chennai, India</p>
+        <p class="edu-note">
+          Undergraduate research in high-speed multiphase flows; team head of
+          the high-speed rocketry program.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============== LEADERSHIP ============== -->
+  <section id="leadership" class="section">
+    <div class="section-head">
+      <span class="sec-num">/ leadership</span>
+      <h2 class="sec-title">Leadership &amp; Activities</h2>
+    </div>
+
+    <article class="exp-item">
+      <div class="exp-meta">
+        <span class="exp-no">&#9733;</span>
+        <span class="exp-date">July 2023 &mdash; June 2024</span>
+        <span class="exp-loc">IIT Madras</span>
+      </div>
+      <div class="exp-body">
+        <h3 class="exp-title">Team Head &mdash; Team Abhyuday</h3>
+        <p class="exp-org">High-speed rocketry team of IIT Madras</p>
+        <ul class="exp-list">
+          <li>
+            Recruited <strong>60 students</strong> across multidisciplinary
+            domains to develop a sounding rocket with an experimental
+            payload for <strong>Spaceport America Cup 2024</strong>.
+          </li>
+          <li>
+            Raised <strong>INR 1.2 million</strong> in funding from
+            sponsors including Tata Consultancy Services, Apollo
+            Microsystems, and ANSYS.
+          </li>
+          <li>
+            Secured <strong>11th</strong> in the 10K&nbsp;ft Solid Rocket
+            Motor (COTS) category, <strong>20th</strong> overall worldwide
+            against 150+ teams, and <strong>1st in India and Asia</strong>.
+          </li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============== SKILLS ============== -->
+  <section id="skills" class="section">
+    <div class="section-head">
+      <span class="sec-num">/ skills</span>
+      <h2 class="sec-title">Technical Skills</h2>
+    </div>
+
+    <div class="skill-grid">
+      <div class="skill-block">
+        <h4>languages</h4>
+        <p>C++ &middot; CUDA <span class="muted">(cuBLAS, cuDNN)</span> &middot; Python &middot; Fortran &middot; MATLAB &middot; Bash &middot; LaTeX</p>
+      </div>
+      <div class="skill-block">
+        <h4>ml &amp; numerical</h4>
+        <p>PyTorch &middot; PyTorch Geometric &middot; TensorFlow &middot; Numba &middot; SciKit-Learn &middot; Pandas</p>
+      </div>
+      <div class="skill-block">
+        <h4>engineering</h4>
+        <p>ANSYS <span class="muted">(Fluent, SpaceClaim)</span> &middot; Fusion 360 &middot; AutoCAD &middot; Linux &middot; HPC clusters</p>
+      </div>
+      <div class="skill-block">
+        <h4>certifications</h4>
+        <p>HPC <span class="muted">(CU Boulder)</span> &middot; Numba <span class="muted">(NVIDIA)</span> &middot; Deep Learning <span class="muted">(Stanford)</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== LINKS ============== -->
+  <section id="links" class="section">
+    <div class="section-head">
+      <span class="sec-num">/ links</span>
+      <h2 class="sec-title">Get in touch</h2>
+    </div>
+
+    <p class="links-intro">
+      Open to research collaborations, internships, and conversations about
+      anything at the edge of CFD, HPC, and scientific ML.
+    </p>
+
+    <div class="link-rows">
+      <a href="mailto:adityakmeshram@gmail.com" class="link-row">
+        <span class="lr-k">email</span>
+        <span class="lr-v">adityakmeshram@gmail.com</span>
+        <span class="lr-go">&rarr;</span>
+      </a>
+      <a href="tel:+16465888733" class="link-row">
+        <span class="lr-k">phone</span>
+        <span class="lr-v">+1 646-588-8733</span>
+        <span class="lr-go">&rarr;</span>
+      </a>
+      <a href="https://github.com/meshram1" target="_blank" rel="noopener" class="link-row">
+        <span class="lr-k">github</span>
+        <span class="lr-v">@meshram1</span>
+        <span class="lr-go">&rarr;</span>
+      </a>
+      <a href="https://www.linkedin.com/in/aditya-kumar-meshram-9157aa201" target="_blank" rel="noopener" class="link-row">
+        <span class="lr-k">linkedin</span>
+        <span class="lr-v">aditya-kumar-meshram</span>
+        <span class="lr-go">&rarr;</span>
+      </a>
+      <a href="https://twitter.com/xmeshram" target="_blank" rel="noopener" class="link-row">
+        <span class="lr-k">x / twitter</span>
+        <span class="lr-v">@xmeshram</span>
+        <span class="lr-go">&rarr;</span>
+      </a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>&copy; 2026 Aditya Kumar Meshram</span>
+    <span class="foot-mid">built in State College, PA</span>
+    <a href="#home">top &uarr;</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
