@@ -23,9 +23,10 @@
   --china-glow:   rgba(79, 106, 173, 0.22);
   --china-tint:   rgba(79, 106, 173, 0.10);
 
-  --f-sans:    'Inter', system-ui, sans-serif;
-  --f-serif:   'Fraunces', Georgia, serif;
-  --f-mono:    'JetBrains Mono', ui-monospace, monospace;
+  /* single font family — Aptos with fallback chain */
+  --f-sans:    'Aptos', 'Aptos Display', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --f-serif:   'Aptos', 'Aptos Display', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --f-mono:    'Aptos', 'Aptos Display', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
 
   --max: 1200px;
   --pad: clamp(1.2rem, 4vw, 2.6rem);
