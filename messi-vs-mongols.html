@@ -406,6 +406,9 @@
       <span class="hud-k" style="margin-top:0.5rem;">escape burst &middot; <b style="color:var(--china-soft)">SPACE</b></span>
       <span class="hud-v" id="escVal" style="font-size:0.9rem;">ready</span>
       <div class="hp-bar"><div class="hp-fill esc-fill" id="escFill" style="background: linear-gradient(90deg, #7ab8e8, #ffffff);"></div></div>
+      <span class="hud-k" style="margin-top:0.5rem;">freekick &middot; <b style="color:#ffcf6b">F</b> &middot; <em style="color:var(--grey-2);font-style:italic;">−20 HP &middot; 5s homing</em></span>
+      <span class="hud-v" id="fkVal" style="font-size:0.9rem;">ready</span>
+      <div class="hp-bar"><div class="hp-fill" id="fkFill" style="background: linear-gradient(90deg, #ffcf6b, #ffffff);"></div></div>
     </div>
     <div class="hud-block" style="text-align:center;">
       <span class="hud-k">wave</span>
@@ -519,6 +522,7 @@
         <div class="ctrl"><span>shoot</span><b>left click</b></div>
         <div class="ctrl"><span>dash</span><b>SHIFT</b></div>
         <div class="ctrl"><span>escape burst</span><b>SPACE</b></div>
+        <div class="ctrl"><span>freekick &minus;20 HP</span><b>F</b></div>
         <div class="ctrl"><span>football</span><b>1</b></div>
         <div class="ctrl"><span>bullet</span><b>2</b></div>
         <div class="ctrl"><span>missile</span><b>3</b></div>
@@ -583,7 +587,19 @@ window.addEventListener('keydown',  e => {
   keys[e.key.toLowerCase()] = true;
   if (['1','2','3'].includes(e.key)) setShot(parseInt(e.key) - 1);
   if (e.key.toLowerCase() === 'p') paused = !paused;
+  if (e.key.toLowerCase() === 'f' && state.running && !paused) tryFreekick();
 });
+
+function tryFreekick() {
+  const now = performance.now();
+  if (state.freekickUntil > now) return;             // already active
+  if (messi.hp <= FREEKICK_MIN_HP) return;            // would kill — refused
+  messi.hp = Math.max(1, messi.hp - FREEKICK_COST);
+  messi.regenT = 0;
+  state.freekickUntil = now + FREEKICK_DUR;
+  // burst FX
+  addParticles(messi.x, messi.y, 40, '#ffcf6b', 5, 800);
+}
 window.addEventListener('keyup',    e => keys[e.key.toLowerCase()] = false);
 canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
 canvas.addEventListener('mousedown', e => { mouse.down = true; });
@@ -629,6 +645,7 @@ const state = {
   lastShot: 0,
   cooldown: [180, 90, 700],  // ms per shot type
   material: 'graphene',
+  freekickUntil: 0,         // performance.now() timestamp
   bosState: null,
 };
 let paused = false;
@@ -637,6 +654,12 @@ let paused = false;
 const ESCAPE_SPEED   = 26;     // px/frame, far faster than any foe
 const ESCAPE_FRAMES  = 55;     // ~0.9s at 60fps
 const ESCAPE_COOL    = 14000;  // ms
+
+// FREEKICK — costs 20 HP, gives 5s of homing shots
+const FREEKICK_DUR     = 5000;   // ms
+const FREEKICK_COST    = 20;     // HP
+const FREEKICK_MIN_HP  = 25;     // can't fire if HP would crash below this
+const FREEKICK_STEER   = 0.22;   // 0..1 — strong enough to always connect
 
 // ---------- entities ----------
 const messi = {
@@ -784,36 +807,37 @@ function fireShot(now) {
   const dy = mouse.y - messi.y;
   const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len, uy = dy / len;
+  const homing = state.freekickUntil > now;  // freekick → curved homing shot
 
   if (state.shot === 0) {
     // football — slower, knockback, 1-shot footmen
     bullets.push({
-      type: 'football',
+      type: 'football', homing,
       x: messi.x + ux*messi.r, y: messi.y + uy*messi.r,
       vx: ux*10, vy: uy*10,
       r: 6,
-      dmg: 1.4, knock: 16, life: 700,
+      dmg: homing ? 2.5 : 1.4, knock: 16, life: 1400,
       pierce: 1,
       spin: 0,
     });
   } else if (state.shot === 1) {
     // bullet — fast, pierces, low damage but precise
     bullets.push({
-      type: 'bullet',
+      type: 'bullet', homing,
       x: messi.x + ux*messi.r, y: messi.y + uy*messi.r,
       vx: ux*22, vy: uy*22,
       r: 3,
-      dmg: 2.0, knock: 6, life: 500,
+      dmg: 2.0, knock: 6, life: 800,
       pierce: 3,
     });
   } else {
-    // missile — homing-ish, AOE
+    // missile — AOE
     bullets.push({
-      type: 'missile',
+      type: 'missile', homing,
       x: messi.x + ux*messi.r, y: messi.y + uy*messi.r,
       vx: ux*7, vy: uy*7,
       r: 5,
-      dmg: 8, knock: 24, life: 1400,
+      dmg: 8, knock: 24, life: 1800,
       explode: 90, pierce: 0,
       smokeT: 0,
     });
@@ -1020,6 +1044,33 @@ function update(dt, now) {
 
   // ----- bullets -----
   for (const b of bullets) {
+    // freekick homing — strong steering toward nearest foe
+    if (b.homing && !b.enemy) {
+      let target = null, nd = Infinity;
+      for (const f of foes) {
+        if (f.hp <= 0) continue;
+        const dd = Math.hypot(f.x - b.x, f.y - b.y);
+        if (dd < nd) { nd = dd; target = f; }
+      }
+      if (boss) {
+        const dd = Math.hypot(boss.x - b.x, boss.y - b.y);
+        if (dd < nd) { nd = dd; target = boss; }
+      }
+      if (target) {
+        const tdx = target.x - b.x, tdy = target.y - b.y;
+        const tdl = Math.hypot(tdx, tdy) || 1;
+        const cs  = Math.hypot(b.vx, b.vy) || 1;
+        // blend velocity toward target, preserve speed
+        let nvx = b.vx + ((tdx / tdl) * cs - b.vx) * FREEKICK_STEER;
+        let nvy = b.vy + ((tdy / tdl) * cs - b.vy) * FREEKICK_STEER;
+        const nl = Math.hypot(nvx, nvy) || 1;
+        b.vx = nvx / nl * cs;
+        b.vy = nvy / nl * cs;
+      }
+      // gold curve sparks
+      if (Math.random() < 0.3) addParticles(b.x, b.y, 1, '#ffcf6b', 0.4, 250);
+    }
+
     b.x += b.vx;
     b.y += b.vy;
     b.life -= dt;
@@ -1332,6 +1383,18 @@ function drawBoss(b) {
 
 function drawBullet(b) {
   ctx.save();
+
+  // freekick aura
+  if (b.homing && !b.enemy) {
+    const aura = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 3.5);
+    aura.addColorStop(0, 'rgba(255, 207, 107, 0.55)');
+    aura.addColorStop(1, 'rgba(255, 207, 107, 0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r * 3.5, 0, Math.PI*2);
+    ctx.fill();
+  }
+
   if (b.type === 'football') {
     ctx.translate(b.x, b.y);
     ctx.rotate(b.spin || 0);
@@ -1339,23 +1402,22 @@ function drawBullet(b) {
     ctx.beginPath();
     ctx.arc(0, 0, b.r, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = b.homing ? '#ffcf6b' : '#000';
+    ctx.lineWidth = b.homing ? 1.6 : 1;
     ctx.stroke();
-    // hex patterning
-    ctx.fillStyle = '#1c1c1c';
+    ctx.fillStyle = b.homing ? '#c98b2a' : '#1c1c1c';
     ctx.beginPath();
     ctx.arc(0, 0, b.r*0.3, 0, Math.PI*2);
     ctx.fill();
   } else if (b.type === 'bullet') {
-    ctx.strokeStyle = '#7ab8e8';
-    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = b.homing ? '#ffcf6b' : '#7ab8e8';
+    ctx.lineWidth = b.homing ? 3 : 2.4;
     ctx.beginPath();
     ctx.moveTo(b.x, b.y);
     ctx.lineTo(b.x - b.vx*0.8, b.y - b.vy*0.8);
     ctx.stroke();
   } else if (b.type === 'missile') {
-    ctx.fillStyle = '#ff6b3a';
+    ctx.fillStyle = b.homing ? '#ffcf6b' : '#ff6b3a';
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
     ctx.fill();
@@ -1401,6 +1463,25 @@ function updateHud() {
     escFill.style.width = '100%';
   }
 
+  // freekick
+  const fkFill = document.getElementById('fkFill');
+  const fkVal  = document.getElementById('fkVal');
+  const now    = performance.now();
+  const fkLeft = state.freekickUntil - now;
+  if (fkLeft > 0) {
+    fkVal.textContent = 'HOMING ' + (fkLeft / 1000).toFixed(1) + 's';
+    fkVal.style.color = '#ffcf6b';
+    fkFill.style.width = (fkLeft / FREEKICK_DUR * 100) + '%';
+  } else if (messi.hp <= FREEKICK_MIN_HP) {
+    fkVal.textContent = 'HP too low';
+    fkVal.style.color = 'var(--grey-2)';
+    fkFill.style.width = '0%';
+  } else {
+    fkVal.textContent = 'ready';
+    fkVal.style.color = '#ffcf6b';
+    fkFill.style.width = '100%';
+  }
+
   document.getElementById('waveVal').textContent = state.wave + ' / ' + WAVES.length;
   const remain = foes.length + (boss ? 1 : 0);
   document.getElementById('foeVal').textContent = remain;
@@ -1431,6 +1512,17 @@ function nextWave() {
 function startWave() {
   const w = WAVES[state.wave - 1];
   const s = w.spawn;
+
+  // RESET — full health, fresh cooldowns at the start of each level
+  messi.hp = messi.maxHp;
+  messi.regenT = 0;
+  messi.dashCool = 0;
+  messi.dashing = 0;
+  messi.escapeT = 0;
+  messi.escapeCool = 0;
+  state.freekickUntil = 0;
+  bullets = [];
+
   if (s.footman)  for (let i = 0; i < s.footman; i++)  spawnFoe('footman');
   if (s.archer)   for (let i = 0; i < s.archer; i++)   spawnFoe('archer');
   if (s.cavalry)  for (let i = 0; i < s.cavalry; i++)  spawnFoe('cavalry');
