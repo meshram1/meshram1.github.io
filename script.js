@@ -52,6 +52,14 @@ if (projectList && !projectList.querySelector('[data-project="fno-datacenter-coo
 }
 
 // ============================================================
+//  project dates — show completion year only
+// ============================================================
+document.querySelectorAll('.p-date').forEach((date) => {
+  const match = date.textContent.match(/(20\d{2})/);
+  if (match) date.textContent = match[1];
+});
+
+// ============================================================
 //  reveal on scroll
 // ============================================================
 const io = new IntersectionObserver(
