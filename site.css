@@ -65,9 +65,9 @@ a { color: inherit; }
 .posts .date { color: var(--muted); white-space: nowrap; }
 
 /* about */
-.about { color: var(--muted); }
+.about { color: var(--text); }
 .about p { margin: 0 0 20px; line-height: 1.9; }
-.about a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.about a { color: var(--text); text-decoration: none; }
 .about a:hover { color: var(--muted); }
 
 /* project pages */
