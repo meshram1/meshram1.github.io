@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>foam2ml: OpenFOAM Cases to ML Data | Aditya Kumar Meshram</title>
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="../index.html">Aditya Kumar Meshram</a>
+  <nav><a href="../index.html">Home</a><span class="sep">|</span><a href="../about.html">About</a></nav>
+</header>
+<main>
+<article class="post">
+<h1>foam2ml: OpenFOAM Cases to ML Data</h1>
+<p class="meta">Sep 2026 &middot; <a href="https://github.com/meshram1/foam2ml">github.com/meshram1/foam2ml</a></p>
+<p>Turn OpenFOAM cases into machine-learning data: graphs for GNNs, grids for neural operators (FNOs).</p>
+<h2>Install</h2>
+<pre><code class="language-bash">pip install git+https://github.com/meshram1/foam2ml
+</code></pre>
+<p>Needs Python 3.9+ and NumPy. Add <code>[pyg]</code> for PyTorch Geometric export.</p>
+<h2>Read a case</h2>
+<pre><code class="language-python">from foam2ml import Case
+
+case = Case(&quot;cavity&quot;)
+U = case.field(&quot;U&quot;)            # (n_cells, 3), latest time
+p = case.field(&quot;p&quot;, &quot;0.1&quot;)
+case.mesh.cell_centres         # matches OpenFOAM's own values
+</code></pre>
+<h2>Graph</h2>
+<pre><code class="language-python">from foam2ml import to_graph
+
+g = to_graph(&quot;airFoil2D&quot;, fields=[&quot;U&quot;, &quot;p&quot;])
+data = g.to_pyg()              # torch_geometric Data
+g.save(&quot;case.npz&quot;)
+</code></pre>
+<p>Cells are nodes, faces are edges. <code>x</code> holds position, cell size and boundary-patch tags; <code>y</code> holds the fields.
+Every column is named.</p>
+<h2>FNO grid</h2>
+<pre><code class="language-python">from foam2ml import Case, patch_bounds, to_grid
+
+case = Case(&quot;airFoil2D&quot;)
+gs = to_grid(case, fields=[&quot;U&quot;, &quot;p&quot;], shape=(256, 128),
+             bounds=patch_bounds(case.mesh, &quot;walls&quot;, pad=0.6))
+x, y = gs.to_torch()           # (4, 256, 128) inputs, (3, 256, 128) targets
+</code></pre>
+<p>Inputs are a fluid mask, signed distance to the walls, and coordinates. Values never cross solid bodies.
+<code>gs.sample(prediction, points)</code> maps a grid prediction back onto the mesh. 2D meshes only.</p>
+<h2>License</h2>
+<p>Apache-2.0. Not approved or endorsed by OpenCFD Ltd, owner of the OPENFOAM® trade mark.</p>
+</article>
+</main>
+</div>
+</body>
+</html>

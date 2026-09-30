@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lagrangian Particle Solver for Rocket Flows | Aditya Kumar Meshram</title>
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="../index.html">Aditya Kumar Meshram</a>
+  <nav><a href="../index.html">Home</a><span class="sep">|</span><a href="../about.html">About</a></nav>
+</header>
+<main>
+<article class="post">
+<h1>Lagrangian Particle Solver for Rocket Flows</h1>
+<p class="meta">Jul 2024 &middot; <a href="https://github.com/meshram1/Lagrangian-Solver-for-Particle-Flow">github.com/meshram1/Lagrangian-Solver-for-Particle-Flow</a></p>
+<p>A Fortran-based solver that solved the straightforward lagrangian equation to determine the particle's location based on EL model on an unstructured grid.
+The algorithm to find the nearby nodes to the closest node using a Euclidean Distance method and a binary tree data structure (KDTree) is included in the file "nearby_nodes.py".
+We find the velocity at the particle's current location using weighted linear interpolation from nearby nodes.</p>
+<p>Some Results (NASA JPL Nozzle and Boeing's IUS Submerged Nozzle in Thrust-Vectored Configuration respectively).
+<img loading="lazy" alt="Pathlines" src="https://github.com/user-attachments/assets/0646e27b-c5ed-4dd0-98d5-8cdb63a21482" />
+<img loading="lazy" alt="TVC" src="https://github.com/user-attachments/assets/59f92f9c-d5b4-4783-9a82-fa350f9d447b" /></p>
+<h2>Context</h2>
+<p>Research at the Rockets &amp; Missiles Lab, IIT Madras (advisor: Prof. P. A. Ramakrishna),
+May 2023 to July 2024. The solver tracks unburned propellant particles inside NASA's rocket booster
+to identify slag-accumulation zones and inform nozzle design, and was optimised to run on AQUA,
+the HPC cluster at IIT Madras.</p>
+<p>Presented at the <em>International Conference on Numerical Methods in Multiphase Flows 5 (ICNMMF-5)</em>,
+Reykjavik, Iceland, June 2024.</p>
+</article>
+</main>
+</div>
+</body>
+</html>

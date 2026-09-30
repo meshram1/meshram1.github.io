@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Neural Networks for CFD Flow Prediction | Aditya Kumar Meshram</title>
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="../index.html">Aditya Kumar Meshram</a>
+  <nav><a href="../index.html">Home</a><span class="sep">|</span><a href="../about.html">About</a></nav>
+</header>
+<main>
+<article class="post">
+<h1>Graph Neural Networks for CFD Flow Prediction</h1>
+<p class="meta">Apr 2026 &middot; <a href="https://github.com/meshram1/GNN-for-CFD">github.com/meshram1/GNN-for-CFD</a></p>
+<p><strong>Team:</strong> Ksenia Kirsanova, Aditya Meshram</p>
+<h2>Overview</h2>
+<p>This repository contains the implementation of a Graph Neural Network (GNN) designed as a high-efficiency surrogate model for Computational Fluid Dynamics (CFD). The model predicts steady-state velocity components (<i>u, v</i>) and pressure distributions (<i>p</i>) across 2D unstructured airfoil meshes. By operating directly on graph-based representations of computational meshes, the GNN captures local spatial dependencies and generalizes across varying airfoil geometries.</p>
+<h2>Project Objectives</h2>
+<ol>
+<li><strong>Surrogate Modeling:</strong> Develop a GNN to map airfoil geometry, angle of attack (<i>&alpha;</i>), and freestream velocity (<i>U<sub>in</sub></i>) to continuous flow fields, acting as a fast alternative to traditional solvers.</li>
+<li><strong>Out-of-Distribution Generalization:</strong> Utilize barycentric coordinate interpolation to predict flow fields on unseen, high-fidelity, refined mesh topologies while maintaining numerical stability.</li>
+<li><strong>Scalability via Graph Partitioning:</strong> Implement spatial decomposition (partitioning the mesh into discrete subgraphs with halo regions) to increase computational throughput and accelerate parallel inference.</li>
+</ol>
+<h2>Dataset &amp; Simulation Setup</h2>
+<ul>
+<li><strong>Solver:</strong> OpenFOAM (SimpleFOAM) for steady, incompressible flow.</li>
+<li><strong>Domain:</strong> 2D external flow, extending 7 chord lengths downstream and 2.5 in other directions.</li>
+<li><strong>Dataset Size:</strong> 770 simulation cases.</li>
+<li><strong>Parameters:</strong> 11 distinct UIUC airfoil geometries, 10 inlet velocities (<i>0.1 - 0.7</i> m/s), and 7 angles of attack (<i>0&deg; - 12&deg;</i>).</li>
+</ul>
+<h2>Model Architecture</h2>
+<p>The GNN operates on a lossless graph representation of the unstructured CFD mesh:</p>
+<ul>
+<li><strong>Nodes:</strong> Mesh cell centers. Features include spatial coordinates <i>[x<sub>i</sub>, y<sub>i</sub>]</i>.</li>
+<li><strong>Edges:</strong> Shared faces between adjacent cells. Features include relative spatial displacements and Euclidean distance <i>[&Delta;x, &Delta;y, d]</i>.</li>
+<li><strong>Global Attributes:</strong> The physical flow conditions <i>[&alpha;, U<sub>in</sub>]</i> broadcast to all edges.</li>
+<li><strong>Message Passing Framework:</strong> A multi-layer perceptron (MLP) computes messages across edges, aggregates them over local neighborhoods, and updates node embeddings via residual connections. A final decoder maps the embeddings to the target flow quantities <i>[u, v, p]</i>.</li>
+</ul>
+<h2>Current Progress &amp; Roadmap</h2>
+<ul>
+<li><strong>Completed:</strong> Multi-geometry data generation, lossless graph preprocessing pipeline, and initial model training (770 samples, batch size 8, 100 epochs).</li>
+<li><strong>Step 1:</strong> Execute trial runs on updated architectures and perform inference on finer meshes to evaluate high-resolution spatial interpolation.</li>
+<li><strong>Step 2:</strong> Optimize hyperparameters, evaluate the surrogate model against mid-fidelity CFD simulations, and benchmark against high-fidelity baselines.</li>
+<li><strong>Step 3:</strong> Implement graph partitioning, gradient aggregation, and halo region management to optimize computational resources and memory.</li>
+</ul>
+<h3>Results</h3>
+<p><img loading="lazy" width="989" height="590" alt="466a66ad-9edf-404a-a333-9f8e7769a06f" src="https://github.com/user-attachments/assets/489e2282-0ea1-403f-8367-79f77d65defc" />
+<img loading="lazy" width="989" height="738" alt="image" src="https://github.com/user-attachments/assets/44070848-2909-4a9e-bf4c-3a9f4132b708" /></p>
+</article>
+</main>
+</div>
+</body>
+</html>
